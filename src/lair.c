@@ -25,3 +25,7 @@ int lair_load_file(const char *file_path, char *loaded, size_t *buf_size) {
 
 	return 0;
 }
+
+void lair_unload_file(char *loaded, size_t buf_size) {
+	munmap(loaded, buf_size);
+}

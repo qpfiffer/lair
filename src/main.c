@@ -24,5 +24,7 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "Could not load file.\n");
 		return 1;
 	}
+
+	lair_unload_file(buf, buf_siz);
 	return 0;
 }

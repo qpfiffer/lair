@@ -32,10 +32,19 @@ static inline int _is_newline(const char *token) {
 	return 0;
 }
 
+/* static inline int _is_all_spaces(const char *token) {
+	int i = 0;
+	for (; i < strlen(token); i++) {
+		if (token[i] == ' ')
+			return 1;
+	}
+	return 0;
+} */
+
 static inline void _strip(const char *from, char *to) {
 	int i = 0, j = 0;
 	for (;i < strlen(from);) {
-		while (from[i] == ' ' || from[i] == '\n' || from[i] == '\r')
+		while (from[i] == '\n' || from[i] == '\r')
 			i++;
 		if (i >= strlen(from))
 			break;

@@ -32,6 +32,13 @@ int lair_execute(const char *program, const size_t len) {
 	const _lair_token *tokens = _tokenize(program, len);
 	if (tokens == NULL)
 		return 1;
+
+	while (tokens != NULL) {
+		_lair_token *to_free = (_lair_token *)tokens;
+		tokens = tokens->next;
+		free(to_free->token);
+		free(to_free);
+	}
 	return 0;
 }
 

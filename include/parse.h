@@ -7,7 +7,7 @@ typedef struct _str {
 } _str;
 
 typedef struct _lair_token {
-	const char *token;
+	char *token;
 	struct _lair_token *next;
 } _lair_token;
 

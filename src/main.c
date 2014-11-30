@@ -19,9 +19,16 @@ int main(int argc, char *argv[]) {
 	char *buf = NULL;
 	size_t buf_siz = 0;
 
-	int rc = lair_load_file(file_path, buf, &buf_siz);
-	if (rc != 0) {
+	buf = lair_load_file(file_path, &buf_siz);
+	if (buf == NULL) {
 		fprintf(stderr, "Could not load file.\n");
+		return 1;
+	}
+
+	int rc = lair_execute(buf, buf_siz);
+	if (rc != 0) {
+		fprintf(stderr, "Could not execute %s.\n", file_path);
+		lair_unload_file(buf, buf_siz);
 		return 1;
 	}
 

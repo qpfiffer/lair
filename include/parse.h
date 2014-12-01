@@ -3,6 +3,22 @@
 /** @file */
 
 /**
+ * @brief	Token types use when parsing.
+ */
+typedef enum {
+	LR_ERR, /**	Unknown type. Should not happen. */
+	LR_FUNCTION, /**	Function. */
+	LR_OPERATOR, /**	An operator (+, -, ?, etc.). */
+	LR_RETURN, /**	The return built-in function. */
+	LR_FUNCTION_ARG, /**	A parameter to a function. */
+	LR_VARIABLE, /**	A variable. */
+	LR_INDENT, /**	An indent. */
+	LR_DEDENT, /**	A dedent. Used on every newline. */
+	LR_STRING, /**	A string constant. */
+	LR_NUM /**	A number. */
+} LAIR_TOKEN;
+
+/**
  * @brief	Simple string type.
  */
 typedef struct _str {
@@ -14,8 +30,11 @@ typedef struct _str {
  * @brief	This is a representation of a token use for parsing into the AST later.
  */
 typedef struct _lair_token {
-	char *token; /**	The string representation of the token. Is probably NUL-terminated. */
+	char *token_str; /**	The string representation of the token. Is probably NUL-terminated. */
+	LAIR_TOKEN token_type; /**	The enumerated token's type. */
+	unsigned int indent_level; /**	The indent level for this piece of code. */
 	struct _lair_token *next; /**	Link to the next token in the list. */
+	struct _lair_token *prev; /**	Pointer to the previous token in the list. */
 } _lair_token;
 
 typedef struct _lair_ast {

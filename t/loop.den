@@ -1,0 +1,4 @@
+loop value
+  ? = value 10
+    : value
+  + value 1

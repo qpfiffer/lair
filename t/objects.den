@@ -1,0 +1,8 @@
+object a b
+  method1 a
+    : b
+  method2
+    + a b
+    : a
+  : 0
+

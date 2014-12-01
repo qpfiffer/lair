@@ -1,0 +1,3 @@
+append str
+  + str "bar"
+  : str

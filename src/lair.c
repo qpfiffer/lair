@@ -33,11 +33,12 @@ int lair_execute(const char *program, const size_t len) {
 	if (tokens == NULL)
 		goto error;
 
-	const _lair_ast *ast = _lair_parse_from_tokens(tokens);
+	const _lair_ast *ast = _lair_parse_from_tokens(&tokens);
 	if (ast == NULL)
-		goto error;
+		return 1;
 
 	return 0;
+
 error:
 	_lair_free_tokens(tokens);
 	return 1;

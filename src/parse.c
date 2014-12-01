@@ -1,4 +1,5 @@
 // vim: noet ts=4 sw=4
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include "parse.h"
@@ -112,7 +113,31 @@ _lair_token *_lair_tokenize(const char *program, const size_t len) {
 	return tokens;
 }
 
-const _lair_ast *_lair_parse_from_tokens(const _lair_token *tokens) {
+static inline _lair_token *_pop_token(_lair_token **tokens) {
+	if (*tokens == NULL)
+		return NULL;
+
+	_lair_token *top = *tokens;
+	*tokens = (*tokens)->next;
+	top->next = NULL;
+
+	return top;
+
+}
+
+const _lair_ast *_lair_parse_from_tokens(_lair_token **tokens) {
+	assert(tokens != NULL);
+
+	/* "pop" the token off of the top of the stack. */
+	_lair_token *current_token = _pop_token(tokens);
+	while (current_token != NULL) {
+		if (current_token->token == NULL) {
+		}
+
+		_lair_free_tokens(current_token);
+		current_token = _pop_token(tokens);
+	}
+
 	return NULL;
 }
 

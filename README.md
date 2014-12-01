@@ -1,4 +1,16 @@
-This is an experimental [Den](http://wiki.xxiivv.com/den) implementation.
+This is an experimental [Den](http://wiki.xxiivv.com/den) implementation. It
+intends to support all of the same syntax with some extra goodies.
+
+### Goals
+
+This is the first language I've ever written an interpreter for, so it is as
+much a learning process as anything else.
+
+* Strong, Dynamic types (Erlang style)
+* String internment
+* Persistent data structures
+* Immuteability
+* Functions as first-class citizens
 
 ### Installation
 

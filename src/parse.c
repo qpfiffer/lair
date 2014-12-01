@@ -231,32 +231,79 @@ static inline _lair_token *_pop_token(_lair_token **tokens) {
 
 	_lair_token *top = *tokens;
 	*tokens = (*tokens)->next;
-	top->next = NULL;
 
 	return top;
 
 }
 
-const _lair_ast *_lair_parse_from_tokens(_lair_token **tokens) {
-	assert(tokens != NULL);
-
-	/* "pop" the token off of the top of the stack. */
-	_lair_token *current_token = _pop_token(tokens);
-	if (current_token->token_type == LR_INDENT) {
-		/* Whitespace. */
-		assert(current_token->token_str == NULL);
+static _lair_type _lair_atomize_token(const _lair_token *token) {
+	switch (token->token_type) {
+		case LR_NUM: {
+			_lair_type num = {
+				.type = LR_NUM,
+				.value = {
+					.num = atoi(token->token_str)
+				}
+			};
+			return num;
+		}
+		default: {
+			_lair_type num = {
+				.type = LR_NUM,
+				.value = {
+					.num = atoi(token->token_str)
+				}
+			};
+			return num;
+		 }
 	}
+}
 
-	_lair_free_tokens(current_token);
-
-	return NULL;
+static void _lair_free_token(_lair_token *token) {
+	free(token->token_str);
+	free(token);
 }
 
 void _lair_free_tokens(_lair_token *tokens) {
 	while (tokens != NULL) {
 		_lair_token *to_free = (_lair_token *)tokens;
 		tokens = tokens->next;
-		free(to_free->token_str);
-		free(to_free);
+		_lair_free_token(to_free);
 	}
+}
+
+_lair_ast *_lair_parse_from_tokens(_lair_token **tokens) {
+	assert(tokens != NULL);
+
+	/* "pop" the token off of the top of the stack. */
+	_lair_token *current_token = _pop_token(tokens);
+	if (current_token->token_type == LR_INDENT) {
+		_lair_ast *list = NULL;
+		_lair_ast *cur_ast_item = NULL;
+
+		/* Skip ahead in line. */
+		_lair_token *old = current_token;
+		current_token = current_token->next;
+		_lair_free_token(old);
+
+		while (current_token->token_type != LR_DEDENT) {
+			_lair_ast *to_append = _lair_parse_from_tokens(&current_token);
+			if (list == NULL) {
+				list = to_append;
+				cur_ast_item = list;
+			} else {
+				cur_ast_item->next = to_append;
+				cur_ast_item = cur_ast_item->next;
+			}
+		}
+		return list;
+	} else {
+		_lair_ast *to_return = calloc(1, sizeof(to_return));
+		to_return->atom = _lair_atomize_token(current_token);
+		return to_return;
+	}
+
+	_lair_free_tokens(current_token);
+
+	return NULL;
 }

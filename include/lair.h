@@ -1,6 +1,8 @@
 // vim: noet ts=4 sw=4
 #pragma once
-/** @file */
+/** @file
+ * @brief Main functions intended for outside usage.
+ */
 
 /**
  * Loads a file into memory.

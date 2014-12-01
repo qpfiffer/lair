@@ -112,7 +112,8 @@ _lair_token *_lair_tokenize(const char *program, const size_t len) {
 	return tokens;
 }
 
-void _lair_parse_from_tokens(const _lair_token *tokens) {
+const _lair_ast *_lair_parse_from_tokens(const _lair_token *tokens) {
+	return NULL;
 }
 
 void _lair_free_tokens(_lair_token *tokens) {

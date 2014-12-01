@@ -5,6 +5,49 @@
 #include <string.h>
 #include "parse.h"
 
+static inline char *_friendly_enum(const LAIR_TOKEN val) {
+	switch (val) {
+		case LR_ERR:			return "ERR";
+		case LR_FUNCTION:		return "FUNCTION";
+		case LR_FUNCTION_ARG:	return "FUNCTION_ARG";
+		case LR_OPERATOR:		return "OP";
+		case LR_RETURN:			return "RETURN";
+		case LR_VARIABLE:		return "VAR";
+		case LR_INDENT:			return "INDENT";
+		case LR_DEDENT:			return "DEDENT";
+		case LR_STRING:			return "STRING";
+		case LR_ATOM:			return "ATOM";
+		case LR_NUM:			return "NUM";
+		default:				return "ERR";
+	}
+}
+
+void lair_print_tokens(const _lair_token *tokens) {
+	const _lair_token *cur_tok = tokens;
+	while (cur_tok != NULL) {
+		const char *frnd = _friendly_enum(cur_tok->token_type);
+		switch (cur_tok->token_type) {
+			case LR_FUNCTION:
+				printf("%s %s ", frnd, cur_tok->token_str);
+				break;
+			case LR_DEDENT:
+				printf("\n");
+				break;
+			case LR_INDENT: {
+				char lvl[cur_tok->indent_level + 1];
+				memset(lvl, ' ', cur_tok->indent_level);
+				lvl[cur_tok->indent_level] = '\0';
+				printf("\n%s", lvl);
+				break;
+			}
+			case LR_ERR:
+			default:
+				printf("%s ", frnd);
+		}
+		cur_tok = cur_tok->next;
+	}
+}
+
 static _str read_line(const char *buf) {
 	char c = '\0';
 
@@ -96,6 +139,8 @@ static void _intuit_token_type(_lair_token *new_token, const char *stripped) {
 			}
 		} else if (_is_all_numbers(stripped)) {
 			new_token->token_type = LR_NUM;
+		} else {
+			new_token->token_type = LR_ATOM;
 		}
 	}
 }
@@ -117,7 +162,7 @@ _lair_token *_lair_tokenize(const char *program, const size_t len) {
 			else if (_is_newline(token))
 				break;
 
-			if (newline) {
+			if (newline != 0) {
 				/* Dedent/indent stuff. */
 				if (token - line.data != 0) {
 					/* line starts with spaces. */
@@ -149,30 +194,25 @@ _lair_token *_lair_tokenize(const char *program, const size_t len) {
 			/* Actually insert it. */
 			_insert_token(&tokens, new_token);
 
-			/* newline is set everytime we're on the first token of a newline. */
-			if (newline) {
-				if (new_token->prev != NULL) {
-					switch (new_token->prev->token_type) {
-						case LR_FUNCTION:
-						case LR_FUNCTION_ARG:
-							new_token->token_type = LR_FUNCTION_ARG;
-							break;
-						case LR_INDENT:
-							_intuit_token_type(new_token, stripped);
-							break;
-						case LR_DEDENT:
-							new_token->token_type = LR_FUNCTION;
-							break;
-						default:
-							new_token->token_type = LR_ERR;
-					}
-				} else {
-					/* Well this is the first thing in the list. Has to be
-					 * a function. */
-					new_token->token_type = LR_FUNCTION;
+			if (new_token->prev != NULL) {
+				switch (new_token->prev->token_type) {
+					case LR_FUNCTION:
+					case LR_FUNCTION_ARG:
+						new_token->token_type = LR_FUNCTION_ARG;
+						break;
+					case LR_INDENT:
+						_intuit_token_type(new_token, stripped);
+						break;
+					case LR_DEDENT:
+						new_token->token_type = LR_FUNCTION;
+						break;
+					default:
+						_intuit_token_type(new_token, stripped);
 				}
 			} else {
-				_intuit_token_type(new_token, stripped);
+				/* Well this is the first thing in the list. Has to be
+				 * a function. */
+				new_token->token_type = LR_FUNCTION;
 			}
 
 
@@ -202,15 +242,12 @@ const _lair_ast *_lair_parse_from_tokens(_lair_token **tokens) {
 
 	/* "pop" the token off of the top of the stack. */
 	_lair_token *current_token = _pop_token(tokens);
-	while (current_token != NULL) {
-		if (current_token->token_type == LR_INDENT) {
-			/* Whitespace. */
-			assert(current_token->token_str == NULL);
-		}
-
-		_lair_free_tokens(current_token);
-		current_token = _pop_token(tokens);
+	if (current_token->token_type == LR_INDENT) {
+		/* Whitespace. */
+		assert(current_token->token_str == NULL);
 	}
+
+	_lair_free_tokens(current_token);
 
 	return NULL;
 }

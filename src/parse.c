@@ -68,7 +68,7 @@ static void _insert_token(_lair_token **head, _lair_token *to_insert) {
 	current->next = to_insert;
 }
 
-const _lair_token *_tokenize(const char *program, const size_t len) {
+_lair_token *_lair_tokenize(const char *program, const size_t len) {
 	_lair_token *tokens = NULL;
 	size_t num_read = 0;
 	while (num_read < len) {
@@ -77,6 +77,13 @@ const _lair_token *_tokenize(const char *program, const size_t len) {
 
 		/* Read in a token: */
 		char *token = strtok((char *)line.data, " ");
+		if (token - line.data != 0) {
+			/* line starts with spaces. */
+			_lair_token *new_token = calloc(1, sizeof(_lair_token));
+			new_token->token = NULL;
+			_insert_token(&tokens, new_token);
+		}
+
 		while (token != NULL) {
 			/* Is it a comment? Ignore the rest of the line. */
 			if (strncmp(token, "#", strlen("#")) == 0)
@@ -103,4 +110,16 @@ const _lair_token *_tokenize(const char *program, const size_t len) {
 		free((char *)line.data);
 	}
 	return tokens;
+}
+
+void _lair_parse_from_tokens(const _lair_token *tokens) {
+}
+
+void _lair_free_tokens(_lair_token *tokens) {
+	while (tokens != NULL) {
+		_lair_token *to_free = (_lair_token *)tokens;
+		tokens = tokens->next;
+		free(to_free->token);
+		free(to_free);
+	}
 }

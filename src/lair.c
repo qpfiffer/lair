@@ -29,16 +29,12 @@ char *lair_load_file(const char *file_path, size_t *buf_size) {
 }
 
 int lair_execute(const char *program, const size_t len) {
-	const _lair_token *tokens = _tokenize(program, len);
+	_lair_token *tokens = _lair_tokenize(program, len);
 	if (tokens == NULL)
 		return 1;
 
-	while (tokens != NULL) {
-		_lair_token *to_free = (_lair_token *)tokens;
-		tokens = tokens->next;
-		free(to_free->token);
-		free(to_free);
-	}
+	const _lair_ast *ast = _lair_parse_from_tokens(tokens);
+	_lair_free_tokens(tokens);
 	return 0;
 }
 

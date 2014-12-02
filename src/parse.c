@@ -162,7 +162,11 @@ _lair_token *_lair_tokenize(const char *program, const size_t len) {
 			else if (_is_newline(token))
 				break;
 
-			if (newline != 0) {
+			/* We don't want to insert an indent/dedent on the very first line,
+			* and we only want to do this at the beginning of each line. The beginning
+			* is basically the end though so this makes sense, right?
+			*/
+			if (newline != 0 && tokens != NULL) {
 				/* Dedent/indent stuff. */
 				if (token - line.data != 0) {
 					/* line starts with spaces. */
@@ -222,6 +226,11 @@ _lair_token *_lair_tokenize(const char *program, const size_t len) {
 
 		free((char *)line.data);
 	}
+
+	_lair_token *eof_token = calloc(1, sizeof(_lair_token));
+	eof_token->token_type = LR_EOF;
+	_insert_token(&tokens, eof_token);
+
 	return tokens;
 }
 
@@ -238,6 +247,16 @@ static inline _lair_token *_pop_token(_lair_token **tokens) {
 
 static _lair_type _lair_atomize_token(const _lair_token *token) {
 	switch (token->token_type) {
+		case LR_FUNCTION: {
+			_lair_type func = {
+				.type = LR_FUNCTION,
+				.value = {
+					.str = calloc(1, strlen(token->token_str))
+				}
+			};
+			memcpy(func.value.str, token->token_str, strlen(token->token_str));
+			return func;
+		}
 		case LR_NUM: {
 			_lair_type num = {
 				.type = LR_NUM,
@@ -248,13 +267,13 @@ static _lair_type _lair_atomize_token(const _lair_token *token) {
 			return num;
 		}
 		default: {
-			_lair_type num = {
-				.type = LR_NUM,
+			_lair_type def = {
+				.type = LR_STRING,
 				.value = {
-					.num = atoi(token->token_str)
+					.str = "Default."
 				}
 			};
-			return num;
+			return def;
 		 }
 	}
 }
@@ -272,33 +291,32 @@ void _lair_free_tokens(_lair_token *tokens) {
 	}
 }
 
-_lair_ast *_lair_parse_from_tokens(_lair_token **tokens) {
-	assert(tokens != NULL);
-
+static _lair_ast *_parse_from_token(_lair_token **tokens) {
 	/* "pop" the token off of the top of the stack. */
 	_lair_token *current_token = _pop_token(tokens);
-	if (current_token->token_type == LR_INDENT) {
-		_lair_ast *list = NULL;
-		_lair_ast *cur_ast_item = NULL;
+	if (current_token->token_type == LR_FUNCTION) {
+		/* Atomize the function, stick it at the head of the list. */
+		_lair_ast *list = calloc(1, sizeof(_lair_ast));
+		list->atom = _lair_atomize_token(current_token);
 
-		/* Skip ahead in line. */
-		_lair_token *old = current_token;
-		current_token = current_token->next;
-		_lair_free_token(old);
+		/* We break out of the loop when we find an EOF or a DEDENT. */
+		_lair_ast *cur_ast_item = list;
+		while (current_token->token_type != LR_DEDENT &&
+			   current_token->token_type != LR_EOF) {
+			_lair_ast *to_append = _parse_from_token(tokens);
+			cur_ast_item->next = to_append;
 
-		while (current_token->token_type != LR_DEDENT) {
-			_lair_ast *to_append = _lair_parse_from_tokens(&current_token);
-			if (list == NULL) {
-				list = to_append;
-				cur_ast_item = list;
-			} else {
-				cur_ast_item->next = to_append;
-				cur_ast_item = cur_ast_item->next;
-			}
+			/* Get the next token in line. */
+			cur_ast_item = cur_ast_item->next;
+			current_token = (*tokens);
+			assert(current_token != NULL && "Unexpected end of input.");
 		}
+
+		_lair_token *unused_dedent = _pop_token(tokens);
+		_lair_free_token(unused_dedent);
 		return list;
 	} else {
-		_lair_ast *to_return = calloc(1, sizeof(to_return));
+		_lair_ast *to_return = calloc(1, sizeof(_lair_ast));
 		to_return->atom = _lair_atomize_token(current_token);
 		return to_return;
 	}
@@ -306,4 +324,23 @@ _lair_ast *_lair_parse_from_tokens(_lair_token **tokens) {
 	_lair_free_tokens(current_token);
 
 	return NULL;
+}
+
+_lair_ast *_lair_parse_from_tokens(_lair_token **tokens) {
+	assert(tokens != NULL);
+	_lair_ast *to_return = NULL;
+	_lair_ast *cur_ast_item = NULL;
+
+	while ((*tokens) != NULL) {
+		_lair_ast *to_append = _parse_from_token(tokens);
+		if (to_return == NULL) {
+			to_return = to_append;
+			cur_ast_item = to_return;
+		} else {
+			cur_ast_item->next = to_return;
+			cur_ast_item = cur_ast_item->next;
+		}
+	}
+
+	return to_return;
 }

@@ -18,6 +18,7 @@ typedef enum {
 	LR_VARIABLE, /**	A variable. */
 	LR_INDENT, /**	An indent. */
 	LR_DEDENT, /**	A dedent. Used on every newline. */
+	LR_EOF, /**	EOF token. */
 	LR_STRING, /**	A string constant. */
 	LR_ATOM, /**	Atomic symbol. Reference to either a variable or a function. */
 	LR_NUM /**	A number. */

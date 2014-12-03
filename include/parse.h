@@ -66,6 +66,7 @@ typedef struct _lair_type {
 typedef struct _lair_ast {
 	struct _lair_ast *next; /**	Next item in the list. */
 	struct _lair_ast *children; /**	Child lists. */
+	struct _lair_ast *sibling; /** If this list is a child of something else, this pointer will be this item's sibling. */
 	_lair_type atom; /**	The value of this AST object. */
 } _lair_ast;
 

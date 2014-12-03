@@ -77,17 +77,10 @@ static inline int _is_newline(const char *token) {
 	return 0;
 }
 
-/* static inline int _is_all_spaces(const char *token) {
-	int i = 0;
-	for (; i < strlen(token); i++) {
-		if (token[i] != ' ')
-			return 0;
-	}
-	return 1;
-} */
 static inline int _is_all_numbers(const char *token) {
 	int i = 0;
 	for (; i < strlen(token); i++) {
+		/* ASCII numerical values are between 0x30 and 0x39. */
 		if ((int)token[i] < 0x30 || (int)token[i] > 0x39)
 			return 0;
 	}
@@ -246,17 +239,11 @@ static inline _lair_token *_pop_token(_lair_token **tokens) {
 }
 
 static _lair_type _lair_atomize_token(const _lair_token *token) {
+	/* This is where we do parse-time type coersion into things that
+	 * better represent the types we're eventually going to want out
+	 * of whatever it is they are in.
+	 */
 	switch (token->token_type) {
-		case LR_FUNCTION: {
-			_lair_type func = {
-				.type = LR_FUNCTION,
-				.value = {
-					.str = calloc(1, strlen(token->token_str))
-				}
-			};
-			memcpy(func.value.str, token->token_str, strlen(token->token_str));
-			return func;
-		}
 		case LR_NUM: {
 			_lair_type num = {
 				.type = LR_NUM,
@@ -268,11 +255,13 @@ static _lair_type _lair_atomize_token(const _lair_token *token) {
 		}
 		default: {
 			_lair_type def = {
-				.type = LR_STRING,
-				.value = {
-					.str = "Default."
-				}
+				.type = token->token_type,
+				.value = {0}
 			};
+			if (token->token_str != NULL) {
+				def.value.str = calloc(1, strlen(token->token_str));
+				memcpy(def.value.str, token->token_str, strlen(token->token_str));
+			}
 			return def;
 		 }
 	}
@@ -328,19 +317,20 @@ static _lair_ast *_parse_from_token(_lair_token **tokens) {
 
 _lair_ast *_lair_parse_from_tokens(_lair_token **tokens) {
 	assert(tokens != NULL);
-	_lair_ast *to_return = NULL;
-	_lair_ast *cur_ast_item = NULL;
+	_lair_ast *ast_root = calloc(1, sizeof(_lair_ast));
+	_lair_ast *child_loc = ast_root->children;
 
 	while ((*tokens) != NULL) {
 		_lair_ast *to_append = _parse_from_token(tokens);
-		if (to_return == NULL) {
-			to_return = to_append;
-			cur_ast_item = to_return;
+		if (ast_root->children == NULL) {
+			ast_root->children = to_append;
+			child_loc = ast_root->children;
 		} else {
-			cur_ast_item->next = to_return;
-			cur_ast_item = cur_ast_item->next;
+			child_loc->sibling = to_append;
 		}
 	}
 
-	return to_return;
+	/* The root node should never have any siblings. */
+	assert(ast_root->next == NULL);
+	return ast_root;
 }

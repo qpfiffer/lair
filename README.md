@@ -1,3 +1,7 @@
+# Is it done yet?
+
+No.
+
 This is an experimental [Den](http://wiki.xxiivv.com/den) implementation. It
 intends to support all of the same syntax with some extra goodies.
 

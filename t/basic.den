@@ -5,3 +5,6 @@ return_10
 
 return_str
     : "foo"
+
+! return_10
+! return_str

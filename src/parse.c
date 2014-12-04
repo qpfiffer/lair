@@ -18,6 +18,7 @@ static inline char *_friendly_enum(const LAIR_TOKEN val) {
 		case LR_STRING:			return "STRING";
 		case LR_ATOM:			return "ATOM";
 		case LR_NUM:			return "NUM";
+		case LR_CALL:			return "CALL";
 		default:				return "ERR";
 	}
 }
@@ -120,6 +121,8 @@ static void _intuit_token_type(_lair_token *new_token, const char *stripped) {
 	if (stripped_len == 1) {
 		if (stripped[0] == ':')
 			new_token->token_type = LR_RETURN;
+		else if (stripped[1] == '!')
+			new_token->token_type = LR_CALL;
 		else
 			new_token->token_type = LR_OPERATOR;
 	} else {
@@ -201,7 +204,10 @@ _lair_token *_lair_tokenize(const char *program, const size_t len) {
 						_intuit_token_type(new_token, stripped);
 						break;
 					case LR_DEDENT:
-						new_token->token_type = LR_FUNCTION;
+						if (new_token->token_str[0] == '!')
+							new_token->token_type = LR_CALL;
+						else
+							new_token->token_type = LR_FUNCTION;
 						break;
 					default:
 						_intuit_token_type(new_token, stripped);
@@ -283,7 +289,8 @@ void _lair_free_tokens(_lair_token *tokens) {
 static _lair_ast *_parse_from_token(_lair_token **tokens) {
 	/* "pop" the token off of the top of the stack. */
 	_lair_token *current_token = _pop_token(tokens);
-	if (current_token->token_type == LR_FUNCTION) {
+	if (current_token->token_type == LR_FUNCTION ||
+		current_token->token_type == LR_CALL) {
 		/* Atomize the function, stick it at the head of the list. */
 		_lair_ast *list = calloc(1, sizeof(_lair_ast));
 		list->atom = _lair_atomize_token(current_token);
@@ -327,6 +334,7 @@ _lair_ast *_lair_parse_from_tokens(_lair_token **tokens) {
 			child_loc = ast_root->children;
 		} else {
 			child_loc->sibling = to_append;
+			child_loc = child_loc->sibling;
 		}
 	}
 

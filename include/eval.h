@@ -15,7 +15,7 @@ struct _tst_map_node;
  * @brief An object representing an environment in Lair.
  */
 typedef struct _lair_env {
-	struct _tst_map_node *functions;
+	struct _tst_map_node *c_functions;
 } _lair_env;
 
 /**

@@ -25,7 +25,7 @@ _lair_add_function(_lair_env *env,
 	assert(strlen(name) > 0);
 
 	/* Check to see if that function already exists: */
-	const _lair_function *existing_func = _tst_map_get(env->functions, name, strlen(name));
+	const _lair_function *existing_func = _tst_map_get(env->c_functions, name, strlen(name));
 	if (existing_func != NULL)
 		return NULL;
 
@@ -37,22 +37,28 @@ _lair_add_function(_lair_env *env,
 	_lair_function *new_func = calloc(1, sizeof(_lair_function));
 	memcpy(new_func, &_stack_func, sizeof(_lair_function));
 
-	_tst_map_insert(&(env->functions), name, strlen(name), new_func, sizeof(_lair_function));
+	_tst_map_insert(&(env->c_functions), name, strlen(name), new_func, sizeof(_lair_function));
 
 	return new_func;
 
 }
 
-static _lair_type *_lair_env_eval(const struct _lair_ast *ast, _lair_env *env) {
+static _lair_type *_lair_call_builtin(const char *func_name, _lair_env *env) {
+	return NULL;
+}
+
+static const _lair_type *_lair_env_eval(const struct _lair_ast *ast, _lair_env *env) {
 	const _lair_ast *cur_ast_node = ast;
 	switch (ast->atom.type) {
 		case LR_FUNCTION:
-			/* TODO: Call functions, somehow. */
-			break;
+			/* Are we calling a builtin C function? */
+			if (_tst_map_get(env->c_functions, ast->atom.value.str, strlen(ast->atom.value.str)) != NULL)
+				return _lair_call_builtin(ast->atom.value.str, env);
+			return NULL;
 		case LR_CALL:
 			return _lair_env_eval(cur_ast_node->next, env);
 		default:
-			break;
+			return &ast->atom;
 	}
 	/* TODO: Expire anything in this scope. */
 

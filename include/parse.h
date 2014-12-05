@@ -72,6 +72,12 @@ typedef struct _lair_ast {
 } _lair_ast;
 
 /**
+ * Helper function to convert a LAIR_TOKEN into a string representation.
+ * @param[in]	val	The token to find the string representation of.
+ */
+char *_friendly_enum(const LAIR_TOKEN val);
+
+/**
  * Parses a raw program (string) into tokens.
  * @param[in]	program	The program to be parsed.
  * @param[in]	len	The length of the program, in bytes.

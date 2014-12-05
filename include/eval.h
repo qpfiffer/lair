@@ -29,8 +29,9 @@ typedef struct _lair_function {
 
 /**
  * Runs a lair AST. (Is that right? Am I fooling anyone?)
+ * @param[in]	root	The root node of the AST.
  */
-int _lair_eval(const struct _lair_ast *ast);
+int _lair_eval(const struct _lair_ast *root);
 
 /**
  * Generates and returns a map with the standard lib in it.

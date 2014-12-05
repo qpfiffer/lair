@@ -5,7 +5,7 @@
 #include <string.h>
 #include "parse.h"
 
-static inline char *_friendly_enum(const LAIR_TOKEN val) {
+inline char *_friendly_enum(const LAIR_TOKEN val) {
 	switch (val) {
 		case LR_ERR:			return "ERR";
 		case LR_FUNCTION:		return "FUNCTION";

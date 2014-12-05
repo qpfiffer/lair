@@ -1,12 +1,14 @@
 // vim: noet ts=4 sw=4
 #include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "eval.h"
-#include "lair_std.h"
-#include "parse.h"
 
-_lair_type *_lair_operator_plus(LAIR_FUNCTION_SIG) {
+#include "eval.h"
+#include "parse.h"
+#include "lair_std.h"
+
+_lair_type *_lair_builtin_operator_plus(LAIR_FUNCTION_SIG) {
 	/* TODO: Fail in a more sensical manner. */
 	assert(argc == 2);
 	assert(argv[0] != NULL);
@@ -50,6 +52,25 @@ _lair_type *_lair_operator_plus(LAIR_FUNCTION_SIG) {
 		}
 		default:
 			assert(1 == 0 && "Don't know how to add these things together.");
+	}
+	return NULL;
+}
+
+_lair_type *_lair_builtin_print(LAIR_FUNCTION_SIG) {
+	/* TODO: Fail in a more sensical manner. */
+	assert(argc == 1);
+	assert(argv[0] != NULL);
+
+	switch (argv[0]->type) {
+	case LR_STRING:
+		printf("%s", argv[0]->value.str);
+		break;
+	case LR_NUM:
+		printf("%i", argv[0]->value.num);
+		break;
+	default:
+		printf("<%s: %p>", _friendly_enum(argv[0]->type), argv[0]);
+		break;
 	}
 	return NULL;
 }

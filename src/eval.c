@@ -9,7 +9,9 @@
 _lair_env *_lair_standard_env() {
 	_lair_env *std_env = calloc(1, sizeof(_lair_env));
 
-	assert(_lair_add_function(std_env, "+", 2, &_lair_operator_plus) != NULL);
+	assert(_lair_add_function(std_env, "+", 2, &_lair_builtin_operator_plus) != NULL);
+	assert(_lair_add_function(std_env, "print", 1, &_lair_builtin_print) != NULL);
+
 	return std_env;
 }
 
@@ -41,8 +43,31 @@ _lair_add_function(_lair_env *env,
 
 }
 
-int _lair_eval(const struct _lair_ast *ast) {
+static int _lair_env_eval(const struct _lair_ast *ast, _lair_env *env) {
+	const _lair_ast *cur_ast_node = ast;
+	switch (ast->atom.type) {
+		case LR_FUNCTION:
+			/* TODO: Call functions, somehow. */
+			break;
+		case LR_CALL:
+			_lair_env_eval(cur_ast_node->next, env);
+			break;
+		default:
+			break;
+	}
+
+	return 0;
+}
+
+int _lair_eval(const struct _lair_ast *root) {
 	_lair_env *std_env = _lair_standard_env();
+	const _lair_ast *cur_ast_node = root->children;
+
+	while (cur_ast_node != NULL) {
+		_lair_env_eval(cur_ast_node, std_env);
+		cur_ast_node = cur_ast_node->sibling;
+	}
+
 	_lair_free_env(std_env);
 	return 0;
 }

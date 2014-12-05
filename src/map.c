@@ -32,12 +32,28 @@ static const int _tst_insert(_tst_map_node **cur_node, const char *key, size_t k
 	}
 }
 
-const int _tst_map_insert(_tst_map_node *root, const char *key, const size_t klen, const void *value, const size_t vsiz) {
-	assert(root != NULL);
+const int _tst_map_insert(_tst_map_node **root, const char *key, const size_t klen, const void *value, const size_t vsiz) {
 	assert(key != NULL);
 	assert(klen > 0);
 
 	size_t _klen = klen;
-	return _tst_insert(&root, key, _klen, value, vsiz);
+	return _tst_insert(root, key, _klen, value, vsiz);
+}
+
+const void *_tst_map_get(_tst_map_node *current_node, const char *key, const size_t klen) {
+	const char current_char = key[0];
+
+	if (current_node == NULL)
+		return NULL;
+
+	if (current_char < current_node->node_char) {
+		return _tst_map_get(current_node->lokid, key, klen);
+	} else if (current_char == current_node->node_char) {
+		if (klen > 1)
+			return _tst_map_get(current_node->eqkid, key + 1, klen - 1);
+		return current_node->value;
+	} else {
+		return _tst_map_get(current_node->hikid, key, klen);
+	}
 }
 

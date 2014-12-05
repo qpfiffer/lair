@@ -1,5 +1,6 @@
 // vim: noet ts=4 sw=4
 #pragma once
+#define LAIR_FUNCTION_SIG const int argc, const struct _lair_type *argv[]
 /**
  * @file
  * Where the magic happens.
@@ -23,7 +24,7 @@ typedef struct _lair_env {
 typedef struct _lair_function {
 	const int argc; /**	The number of arguments in the argv array. This is also the number of arguments the function takes. */
 	struct _lair_type **argv; /**	The arguments themselves. */
-	struct _lair_type *(*function_ptr)(const int argc, const struct _lair_type *argv[]); /**	A C function that will be called when this is evaluated. */
+	struct _lair_type *(*function_ptr)(LAIR_FUNCTION_SIG); /**	A C function that will be called when this is evaluated. */
 } _lair_function;
 
 /**
@@ -44,8 +45,12 @@ _lair_env *_lair_standard_env();
  * @param[in]	env		The environment to add the function to.
  * @param[in]	name	The name/symbol of the function.
  * @param[in]	argc	The argument require count for the function to be added.
+ * @param[in]	func_ptr	The function to evaluate.
  */
-_lair_function *_lair_add_function(_lair_env *env, const char *name, const int argc);
+_lair_function *_lair_add_function(_lair_env *env,
+		const char *name,
+		const int argc,
+		struct _lair_type *(*func_ptr)(LAIR_FUNCTION_SIG));
 
 /**
  * Frees the stuff in an environment, and the env itself.

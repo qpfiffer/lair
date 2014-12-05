@@ -31,7 +31,7 @@ typedef struct _tst_map_node {
  * @param[in]	value	The data you want to insert.
  * @param[in]	vsize	The size of the value you want to insert.
  */
-const int _tst_map_insert(_tst_map_node *root, const char *key, const size_t klen, const void *value, const size_t vsize);
+const int _tst_map_insert(_tst_map_node **root, const char *key, const size_t klen, const void *value, const size_t vsize);
 
 /**
  * Function used to get something out of the tree.

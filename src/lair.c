@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "eval.h"
 #include "lair.h"
 #include "parse.h"
 
@@ -37,6 +38,7 @@ int lair_execute(const char *program, const size_t len) {
 	if (ast == NULL)
 		return 1;
 
+	_lair_eval(ast);
 	return 0;
 
 error:

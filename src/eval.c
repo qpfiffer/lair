@@ -43,21 +43,20 @@ _lair_add_function(_lair_env *env,
 
 }
 
-static int _lair_env_eval(const struct _lair_ast *ast, _lair_env *env) {
+static _lair_type *_lair_env_eval(const struct _lair_ast *ast, _lair_env *env) {
 	const _lair_ast *cur_ast_node = ast;
 	switch (ast->atom.type) {
 		case LR_FUNCTION:
 			/* TODO: Call functions, somehow. */
 			break;
 		case LR_CALL:
-			_lair_env_eval(cur_ast_node->next, env);
-			break;
+			return _lair_env_eval(cur_ast_node->next, env);
 		default:
 			break;
 	}
 	/* TODO: Expire anything in this scope. */
 
-	return 0;
+	return NULL;
 }
 
 int _lair_eval(const struct _lair_ast *root) {
@@ -65,8 +64,12 @@ int _lair_eval(const struct _lair_ast *root) {
 	const _lair_ast *cur_ast_node = root->children;
 
 	while (cur_ast_node != NULL) {
-		/* TODO: Add functions defined in code to the env. */
-		_lair_env_eval(cur_ast_node, std_env);
+		if (cur_ast_node->atom.type == LR_CALL) {
+			_lair_env_eval(cur_ast_node, std_env);
+		} else if (cur_ast_node->atom.type == LR_FUNCTION) {
+			/* TODO: Add functions defined in code to the env. */
+		}
+
 		cur_ast_node = cur_ast_node->sibling;
 	}
 

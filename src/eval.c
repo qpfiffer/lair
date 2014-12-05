@@ -55,6 +55,7 @@ static int _lair_env_eval(const struct _lair_ast *ast, _lair_env *env) {
 		default:
 			break;
 	}
+	/* TODO: Expire anything in this scope. */
 
 	return 0;
 }
@@ -64,6 +65,7 @@ int _lair_eval(const struct _lair_ast *root) {
 	const _lair_ast *cur_ast_node = root->children;
 
 	while (cur_ast_node != NULL) {
+		/* TODO: Add functions defined in code to the env. */
 		_lair_env_eval(cur_ast_node, std_env);
 		cur_ast_node = cur_ast_node->sibling;
 	}

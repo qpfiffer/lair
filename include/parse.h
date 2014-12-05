@@ -20,6 +20,7 @@ typedef enum {
 	LR_DEDENT, /**	A dedent. Used on every newline. */
 	LR_EOF, /**	EOF token. */
 	LR_STRING, /**	A string constant. */
+	LR_CALL, /**	A function call. */
 	LR_ATOM, /**	Atomic symbol. Reference to either a variable or a function. */
 	LR_NUM /**	A number. */
 } LAIR_TOKEN;

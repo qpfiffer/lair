@@ -43,7 +43,25 @@ _lair_add_function(_lair_env *env,
 
 }
 
-static _lair_type *_lair_call_builtin(const char *func_name, _lair_env *env) {
+static _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_env *env) {
+	/* Determine if the thing we're trying to call is a function
+	 * or not. It might be an atom, in which case we need to check
+	 * or function/c_function maps to see if it's in there.
+	 */
+	const char *func_name = ast_node->atom.value.str;
+	const size_t func_len = strlen(ast_node->atom.value.str);
+
+	/* TODO: Check the environment for non-C functions as well. */
+	const _lair_function *builtin_function = _tst_map_get(env->c_functions, func_name, func_len);
+	if (builtin_function == NULL)
+		return NULL;
+
+	/*
+	_lair_ast *cur_node = ast_node->next;
+	int i;
+	for (i = 0; i < builtin_function->argc; i++) {
+	}
+	*/
 	return NULL;
 }
 
@@ -51,11 +69,10 @@ static const _lair_type *_lair_env_eval(const struct _lair_ast *ast, _lair_env *
 	const _lair_ast *cur_ast_node = ast;
 	switch (ast->atom.type) {
 		case LR_FUNCTION:
-			/* Are we calling a builtin C function? */
-			if (_tst_map_get(env->c_functions, ast->atom.value.str, strlen(ast->atom.value.str)) != NULL)
-				return _lair_call_builtin(ast->atom.value.str, env);
-			return NULL;
+			return _lair_call_function(cur_ast_node, env);
 		case LR_CALL:
+			assert(cur_ast_node->next->atom.type == LR_FUNCTION ||
+					cur_ast_node->next->atom.type == LR_ATOM);
 			return _lair_env_eval(cur_ast_node->next, env);
 		default:
 			return &ast->atom;

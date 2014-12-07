@@ -121,7 +121,7 @@ static void _intuit_token_type(_lair_token *new_token, const char *stripped) {
 	if (stripped_len == 1) {
 		if (stripped[0] == ':')
 			new_token->token_type = LR_RETURN;
-		else if (stripped[1] == '!')
+		else if (stripped[0] == '!')
 			new_token->token_type = LR_CALL;
 		else
 			new_token->token_type = LR_OPERATOR;
@@ -305,7 +305,12 @@ static _lair_ast *_parse_from_token(_lair_token **tokens) {
 			/* Get the next token in line. */
 			cur_ast_item = cur_ast_item->next;
 			current_token = (*tokens);
-			assert(current_token != NULL && "Unexpected end of input.");
+			if (current_token == NULL) {
+				/* This happens sometimes if we have a statement like the following:
+				 * ! print ! return 10<EOF>
+				 */
+				return list;
+			}
 		}
 
 		_lair_token *unused_dedent = _pop_token(tokens);

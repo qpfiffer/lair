@@ -62,7 +62,7 @@ static _lair_type *_lair_call_builtin(const _lair_ast *ast_node, _lair_env *env,
 	return NULL;
 }
 
-static _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_env *env) {
+static const _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_env *env) {
 	/* Determine if the thing we're trying to call is a function
 	 * or not. It might be an atom, in which case we need to check
 	 * or function/c_function maps to see if it's in there.
@@ -74,25 +74,37 @@ static _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_env *env
 	if (builtin_function != NULL)
 		return _lair_call_builtin(ast_node, env, builtin_function);
 
+	/* Well if we're at this point this is a program-defined function. */
 	const _lair_ast *defined_function_ast = _tst_map_get(env->functions, func_name, func_len);
 	assert(defined_function_ast != NULL && "No such function to call.");
 
-	/* TODO: Check the environment for non-C functions as well. */
+	/* Figure out how many arguments are require for this function. */
+	int argc = 0;
+	_lair_ast *_func_eval_ast = ((_lair_ast *)defined_function_ast)->next;
+	while (_func_eval_ast->atom.type == LR_FUNCTION_ARG) {
+		argc++;
+		_func_eval_ast = _func_eval_ast->next;
+	}
+
+	if (argc > 0) {
+		assert(1 == 0 && "Not implemented yet.");
+	} else {
+		return _lair_env_eval(_func_eval_ast, env);
+	}
+
 	return NULL;
 }
 
 const _lair_type *_lair_env_eval(const struct _lair_ast *ast, _lair_env *env) {
-	const _lair_ast *cur_ast_node = ast;
 	switch (ast->atom.type) {
-		/* case LR_FUNCTION:
-		 *	return _lair_call_function(cur_ast_node, env);
-		 */
 		case LR_CALL:
-			return _lair_call_function(cur_ast_node->next, env);
+			return _lair_call_function(ast->next, env);
 		case LR_ATOM:
 			/* TODO: See if the value of this ATOM is actually a function.
 			 * Then eval that.
 			 */
+		case LR_RETURN:
+			return &ast->next->atom;
 		default:
 			return &ast->atom;
 	}

@@ -9,14 +9,14 @@
 _lair_env *_lair_standard_env() {
 	_lair_env *std_env = calloc(1, sizeof(_lair_env));
 
-	assert(_lair_add_function(std_env, "+", 2, &_lair_builtin_operator_plus) != NULL);
-	assert(_lair_add_function(std_env, "print", 1, &_lair_builtin_print) != NULL);
+	assert(_lair_add_builtin_function(std_env, "+", 2, &_lair_builtin_operator_plus) != NULL);
+	assert(_lair_add_builtin_function(std_env, "print", 1, &_lair_builtin_print) != NULL);
 
 	return std_env;
 }
 
 _lair_function *
-_lair_add_function(_lair_env *env,
+_lair_add_builtin_function(_lair_env *env,
 		const char *name,
 		const int argc,
 		struct _lair_type *(*func_ptr)(LAIR_FUNCTION_SIG)) {
@@ -84,8 +84,9 @@ static _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_env *env
 const _lair_type *_lair_env_eval(const struct _lair_ast *ast, _lair_env *env) {
 	const _lair_ast *cur_ast_node = ast;
 	switch (ast->atom.type) {
-		case LR_FUNCTION:
-			return _lair_call_function(cur_ast_node, env);
+		/* case LR_FUNCTION:
+		 *	return _lair_call_function(cur_ast_node, env);
+		 */
 		case LR_CALL:
 			return _lair_call_function(cur_ast_node->next, env);
 		case LR_ATOM:
@@ -109,6 +110,10 @@ int _lair_eval(const struct _lair_ast *root) {
 			_lair_env_eval(cur_ast_node, std_env);
 		} else if (cur_ast_node->atom.type == LR_FUNCTION) {
 			/* TODO: Add functions defined in code to the env. */
+			const char *func_name = cur_ast_node->atom.value.str;
+			const size_t func_name_len = strlen(func_name);
+			_tst_map_insert(&(std_env->functions), func_name, func_name_len,
+					cur_ast_node, sizeof(_lair_ast));
 		}
 
 		cur_ast_node = cur_ast_node->sibling;

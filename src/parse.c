@@ -194,6 +194,11 @@ _lair_token *_lair_tokenize(const char *program, const size_t len) {
 			/* Actually insert it. */
 			_insert_token(&tokens, new_token);
 
+#define CALL_OR_FUNCTION if (new_token->token_str[0] == '!')\
+							new_token->token_type = LR_CALL;\
+						else\
+							new_token->token_type = LR_FUNCTION;\
+
 			if (new_token->prev != NULL) {
 				switch (new_token->prev->token_type) {
 					case LR_FUNCTION:
@@ -204,18 +209,13 @@ _lair_token *_lair_tokenize(const char *program, const size_t len) {
 						_intuit_token_type(new_token, stripped);
 						break;
 					case LR_DEDENT:
-						if (new_token->token_str[0] == '!')
-							new_token->token_type = LR_CALL;
-						else
-							new_token->token_type = LR_FUNCTION;
+						CALL_OR_FUNCTION
 						break;
 					default:
 						_intuit_token_type(new_token, stripped);
 				}
 			} else {
-				/* Well this is the first thing in the list. Has to be
-				 * a function. */
-				new_token->token_type = LR_FUNCTION;
+				CALL_OR_FUNCTION
 			}
 
 
@@ -312,9 +312,6 @@ static _lair_ast *_parse_from_token(_lair_token **tokens) {
 				return list;
 			}
 		}
-
-		_lair_token *unused_dedent = _pop_token(tokens);
-		_lair_free_token(unused_dedent);
 		return list;
 	} else {
 		_lair_ast *to_return = calloc(1, sizeof(_lair_ast));
@@ -334,6 +331,10 @@ _lair_ast *_lair_parse_from_tokens(_lair_token **tokens) {
 
 	while ((*tokens) != NULL) {
 		_lair_ast *to_append = _parse_from_token(tokens);
+
+		_lair_token *unused_dedent = _pop_token(tokens);
+		_lair_free_token(unused_dedent);
+
 		if (ast_root->children == NULL) {
 			ast_root->children = to_append;
 			child_loc = ast_root->children;

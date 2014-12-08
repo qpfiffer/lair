@@ -49,7 +49,7 @@ _lair_env *_lair_standard_env();
  * @param[in]	argc	The argument require count for the function to be added.
  * @param[in]	func_ptr	The function to evaluate.
  */
-_lair_function *_lair_add_function(_lair_env *env,
+_lair_function *_lair_add_builtin_function(_lair_env *env,
 		const char *name,
 		const int argc,
 		struct _lair_type *(*func_ptr)(LAIR_FUNCTION_SIG));

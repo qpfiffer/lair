@@ -23,6 +23,16 @@ inline char *_friendly_enum(const LAIR_TOKEN val) {
 	}
 }
 
+inline char *_friendly_types(const LAIR_TYPES val) {
+	switch (val) {
+		case LRT_ATOM:			return "ATOM";
+		case LRT_NUM:			return "NUM";
+		case LRT_STRING:		return "STRNG";
+		case LRT_LIST:			return "LIST";
+		default:				return "ERR";
+	}
+}
+
 void lair_print_tokens(const _lair_token *tokens) {
 	const _lair_token *cur_tok = tokens;
 	while (cur_tok != NULL) {

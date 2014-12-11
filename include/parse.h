@@ -26,6 +26,16 @@ typedef enum {
 } LAIR_TOKEN;
 
 /**
+ * @brief	The types of values that exist in the Lair runtime.
+ */
+typedef enum {
+	LRT_ATOM,
+	LRT_NUM, /**	An integer value. */
+	LRT_STRING, /**	A string value. */
+	LRT_LIST /**	A list of other values. */
+} LAIR_TYPES;
+
+/**
  * @brief	Simple string type.
  */
 typedef struct _str {
@@ -50,13 +60,18 @@ typedef struct _lair_token {
 typedef union _lair_value {
 	int num; /**	If this type is an integer, this will be the integer value. */
 	char *str; /**	Like `num`, but this will hold a string instead. */
+	union list {
+		struct _lair_type *next;
+		struct _lair_type *prev;
+		struct _lair_type *head;
+	};
 } _lair_value;
 
 /**
  * @brief	Meta-information about a `_lair_value`.
  */
 typedef struct _lair_type {
-	const LAIR_TOKEN type; /**	This lets us know what kind of type the value is. Number, string, etc. */
+	const LAIR_TYPES type; /**	This lets us know what kind of type the value is. Number, string, etc. */
 	_lair_value value; /**	The actual value. */
 } _lair_type;
 
@@ -76,6 +91,12 @@ typedef struct _lair_ast {
  * @param[in]	val	The token to find the string representation of.
  */
 char *_friendly_enum(const LAIR_TOKEN val);
+
+/**
+ * Helpger function to convert a LAIR_TYPE into a string representation.
+ * @param[in]	val	The value to infer.
+ */
+char *_friendly_types(const LAIR_TYPES val);
 
 /**
  * Parses a raw program (string) into tokens.

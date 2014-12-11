@@ -1,6 +1,11 @@
-# Is it done yet?
+# Done status
 
-No.
+- [x] Can print stuff
+- [ ] Arguments
+- [ ] Functions-as-arguments
+- [ ] Loops
+- [ ] Arrays
+- [ ] Nested Functions
 
 This is an experimental [Den](http://wiki.xxiivv.com/den) implementation. It
 intends to support all of the same syntax with some extra goodies.

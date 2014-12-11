@@ -96,6 +96,7 @@ static const _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_en
 }
 
 const _lair_type *_lair_env_eval(const struct _lair_ast *ast, _lair_env *env) {
+start_eval:
 	switch (ast->atom.type) {
 		case LR_CALL:
 			return _lair_call_function(ast->next, env);
@@ -103,6 +104,9 @@ const _lair_type *_lair_env_eval(const struct _lair_ast *ast, _lair_env *env) {
 			/* TODO: See if the value of this ATOM is actually a function.
 			 * Then eval that.
 			 */
+		case LR_INDENT:
+			ast = ast->next;
+			goto start_eval;
 		case LR_RETURN:
 			return &ast->next->atom;
 		default:

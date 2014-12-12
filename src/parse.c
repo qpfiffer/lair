@@ -1,8 +1,9 @@
 // vim: noet ts=4 sw=4
-#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+
+#include "error.h"
 #include "parse.h"
 
 inline char *_friendly_enum(const LAIR_TOKEN val) {
@@ -130,8 +131,7 @@ static void _intuit_token_type(_lair_token *new_token, const char *stripped) {
 			if (stripped[stripped_len - 1] == '"') {
 				new_token->token_type = LR_STRING;
 			} else {
-				fprintf(stderr, "Syntax error: %s has no ending \".\n", stripped);
-				assert(1 == 0); /* Whatever. */
+				error_and_die(ERR_SYNTAX, "String has no ending \".");
 			}
 		} else if (_is_all_numbers(stripped)) {
 			new_token->token_type = LR_NUM;
@@ -325,7 +325,7 @@ static _lair_ast *_parse_from_token(_lair_token **tokens) {
 }
 
 _lair_ast *_lair_parse_from_tokens(_lair_token **tokens) {
-	assert(tokens != NULL);
+	check(tokens != NULL, ERR_PARSE, "No tokens to parse.");
 	_lair_ast *ast_root = calloc(1, sizeof(_lair_ast));
 	_lair_ast *child_loc = ast_root->children;
 
@@ -345,6 +345,6 @@ _lair_ast *_lair_parse_from_tokens(_lair_token **tokens) {
 	}
 
 	/* The root node should never have any siblings. */
-	assert(ast_root->next == NULL);
+	check(ast_root->next == NULL, ERR_PARSE, "The tree got messed up somehow.");
 	return ast_root;
 }

@@ -1,5 +1,4 @@
 // vim: noet ts=4 sw=4
-#include <assert.h>
 #include <string.h>
 
 #include "error.h"
@@ -57,7 +56,7 @@ static _lair_type *_lair_call_builtin(const _lair_ast *ast_node, _lair_env *env,
 		args[0] = _lair_env_eval(ast_node->next, env);
 		return builtin_function->function_ptr(builtin_function->argc, args);
 	} else {
-		assert(1 == 0 && "Not yet implemented.");
+		check(1 == 0, ERR_RUNTIME, "Not yet implemented.");
 		//_lair_ast *cur_node = ast_node->next;
 		//int i;
 		//for (i = 0; i < builtin_function->argc; i++) {
@@ -81,7 +80,7 @@ static const _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_en
 
 	/* Well if we're at this point this is a program-defined function. */
 	const _lair_ast *defined_function_ast = _tst_map_get(env->functions, func_name, func_len);
-	assert(defined_function_ast != NULL && "No such function to call.");
+	check(defined_function_ast != NULL, ERR_RUNTIME, "No such function.");
 
 	/* Figure out how many arguments are require for this function. */
 	int argc = 0;
@@ -92,7 +91,7 @@ static const _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_en
 	}
 
 	if (argc > 0) {
-		assert(1 == 0 && "Not implemented yet.");
+		check(1 == 0, ERR_RUNTIME, "Not yet implemented.");
 	} else {
 		return _lair_env_eval(_func_eval_ast, env);
 	}

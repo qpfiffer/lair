@@ -1,6 +1,8 @@
 // vim: noet ts=4 sw=4
 #include <stdlib.h>
 #include <stdio.h>
+
+#include "error.h"
 #include "lair.h"
 
 static void _print_usage(const char *name) {
@@ -21,14 +23,13 @@ int main(int argc, char *argv[]) {
 
 	buf = lair_load_file(file_path, &buf_siz);
 	if (buf == NULL) {
-		fprintf(stderr, "Could not load file.\n");
+		error_and_die(ERR_RUNTIME, "Could not load file.");
 		return 1;
 	}
 
 	int rc = lair_execute(buf, buf_siz);
 	if (rc != 0) {
-		fprintf(stderr, "Could not execute %s.\n", file_path);
-		lair_unload_file(buf, buf_siz);
+		error_and_die(ERR_RUNTIME, "Could not execute.");
 		return 1;
 	}
 

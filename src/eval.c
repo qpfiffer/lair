@@ -1,6 +1,8 @@
 // vim: noet ts=4 sw=4
 #include <assert.h>
 #include <string.h>
+
+#include "error.h"
 #include "eval.h"
 #include "lair_std.h"
 #include "map.h"
@@ -9,8 +11,11 @@
 _lair_env *_lair_standard_env() {
 	_lair_env *std_env = calloc(1, sizeof(_lair_env));
 
-	assert(_lair_add_builtin_function(std_env, "+", 2, &_lair_builtin_operator_plus) != NULL);
-	assert(_lair_add_builtin_function(std_env, "print", 1, &_lair_builtin_print) != NULL);
+	_lair_function *_plus = _lair_add_builtin_function(std_env, "+", 2, &_lair_builtin_operator_plus);
+	check(_plus != NULL, ERR_RUNTIME, "Could not build standard env.");
+
+	_lair_function *_print = _lair_add_builtin_function(std_env, "print", 1, &_lair_builtin_print);
+	check(_print != NULL, ERR_RUNTIME, "Could not build standard env.");
 
 	return std_env;
 }
@@ -20,9 +25,9 @@ _lair_add_builtin_function(_lair_env *env,
 		const char *name,
 		const int argc,
 		struct _lair_type *(*func_ptr)(LAIR_FUNCTION_SIG)) {
-	assert(name != NULL);
-	assert(env != NULL);
-	assert(strlen(name) > 0);
+	check(name != NULL, ERR_RUNTIME, "Function name cannot be NULL.");
+	check(env != NULL, ERR_RUNTIME, "Environment cannot be NULL.");
+	check(strlen(name) > 0, ERR_RUNTIME, "Function name must be more than 0 chars.");
 
 	/* Check to see if that function already exists: */
 	const _lair_function *existing_func = _tst_map_get(env->c_functions, name, strlen(name));

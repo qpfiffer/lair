@@ -57,3 +57,6 @@ const void *_tst_map_get(_tst_map_node *current_node, const char *key, const siz
 	}
 }
 
+void _tst_map_destroy(_tst_map_node *root) {
+	/* TODO: This whole function. */
+}

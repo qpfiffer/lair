@@ -181,7 +181,7 @@ _lair_token *_lair_tokenize(const char *program, const size_t len) {
 
 			/* Create the shell of the new token and insert it. */
 			_lair_token *new_token = calloc(1, sizeof(_lair_token));
-			new_token->token_str = calloc(1, strlen(token));
+			new_token->token_str = calloc(1, strlen(token) + 1);
 
 			/* Copy the string representation of the token into the stack. */
 			const size_t new_token_len = strlen(token);
@@ -251,7 +251,7 @@ static char *_convert_str_token_to_str(const char *token) {
 	/* TODO: Escape stuff here. Like \r, \n, \t, etc. */
 	const size_t string_len = strlen(token);
 	const size_t new_string_len = string_len - strlen("\"\"");
-	char *to_return = calloc(1, new_string_len);
+	char *to_return = calloc(1, new_string_len + 1);
 
 	memcpy(to_return, token + 1, new_string_len);
 	return to_return;
@@ -287,7 +287,7 @@ static _lair_type _lair_atomize_token(const _lair_token *token) {
 				.value = {0}
 			};
 			if (token->token_str != NULL) {
-				def.value.str = calloc(1, strlen(token->token_str));
+				def.value.str = calloc(1, strlen(token->token_str) + 1);
 				memcpy(def.value.str, token->token_str, strlen(token->token_str));
 			}
 			return def;

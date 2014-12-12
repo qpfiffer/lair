@@ -144,5 +144,7 @@ int _lair_eval(const struct _lair_ast *root) {
 }
 
 void _lair_free_env(_lair_env *env) {
+	_tst_map_destroy(env->c_functions);
+	_tst_map_destroy(env->functions);
 	free(env);
 }

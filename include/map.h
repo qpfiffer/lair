@@ -44,3 +44,8 @@ const void *_tst_map_get(_tst_map_node *root, const char *key, const size_t klen
  * Returns 0 on successful deletion.
  */
 const int _tst_map_delete(_tst_map_node *root, const char *key, const size_t klen);
+
+/**
+ * Frees the entire tree.
+ */
+void _tst_map_destroy(_tst_map_node *root);

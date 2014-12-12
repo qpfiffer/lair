@@ -244,6 +244,19 @@ static inline _lair_token *_pop_token(_lair_token **tokens) {
 
 }
 
+static char *_convert_str_token_to_str(const char *token) {
+	/* This function does stuff like convert escaped characters to their
+	 * proper values, remove double quotes, etc.
+	 */
+	/* TODO: Escape stuff here. Like \r, \n, \t, etc. */
+	const size_t string_len = strlen(token);
+	const size_t new_string_len = string_len - strlen("\"\"");
+	char *to_return = calloc(1, new_string_len);
+
+	memcpy(to_return, token + 1, new_string_len);
+	return to_return;
+}
+
 static _lair_type _lair_atomize_token(const _lair_token *token) {
 	/* This is where we do parse-time type coersion into things that
 	 * better represent the types we're eventually going to want out
@@ -259,6 +272,15 @@ static _lair_type _lair_atomize_token(const _lair_token *token) {
 			};
 			return num;
 		}
+		case LR_STRING: {
+			_lair_type def = {
+				.type = token->token_type,
+				.value = {0}
+			};
+			if (token->token_str != NULL)
+				def.value.str = _convert_str_token_to_str(token->token_str);
+			return def;
+		}
 		default: {
 			_lair_type def = {
 				.type = token->token_type,
@@ -269,7 +291,7 @@ static _lair_type _lair_atomize_token(const _lair_token *token) {
 				memcpy(def.value.str, token->token_str, strlen(token->token_str));
 			}
 			return def;
-		 }
+		}
 	}
 }
 

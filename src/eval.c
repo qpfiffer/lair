@@ -7,6 +7,28 @@
 #include "map.h"
 #include "parse.h"
 
+static const _lair_type _lair_true = {
+	.type = LR_BOOL,
+	.value = {
+		.bool = 1
+	}
+};
+
+static const _lair_type _lair_false = {
+	.type = LR_BOOL,
+	.value = {
+		.bool = 0
+	}
+};
+
+const inline _lair_type *_lair_canonical_false() {
+	return &_lair_false;
+}
+
+const inline _lair_type *_lair_canonical_true() {
+	return &_lair_true;
+}
+
 _lair_env *_lair_standard_env() {
 	_lair_env *std_env = calloc(1, sizeof(_lair_env));
 
@@ -23,7 +45,7 @@ _lair_function *
 _lair_add_builtin_function(_lair_env *env,
 		const char *name,
 		const int argc,
-		struct _lair_type *(*func_ptr)(LAIR_FUNCTION_SIG)) {
+		const struct _lair_type *(*func_ptr)(LAIR_FUNCTION_SIG)) {
 	check(name != NULL, ERR_RUNTIME, "Function name cannot be NULL.");
 	check(env != NULL, ERR_RUNTIME, "Environment cannot be NULL.");
 	check(strlen(name) > 0, ERR_RUNTIME, "Function name must be more than 0 chars.");
@@ -47,7 +69,7 @@ _lair_add_builtin_function(_lair_env *env,
 
 }
 
-static _lair_type *_lair_call_builtin(const _lair_ast *ast_node, _lair_env *env, const _lair_function *builtin_function) {
+static const _lair_type *_lair_call_builtin(const _lair_ast *ast_node, _lair_env *env, const _lair_function *builtin_function) {
 	if (ast_node->next->atom.type == LR_CALL) {
 		/* We need to evaluate the RHS before we can pass it to the function
 		 * as arguments.

@@ -25,7 +25,7 @@ typedef struct _lair_env {
 typedef struct _lair_function {
 	const int argc; /**	The number of arguments in the argv array. This is also the number of arguments the function takes. */
 	struct _lair_type **argv; /**	The arguments themselves. */
-	struct _lair_type *(*function_ptr)(LAIR_FUNCTION_SIG); /**	A C function that will be called when this is evaluated. */
+	const struct _lair_type *(*function_ptr)(LAIR_FUNCTION_SIG); /**	A C function that will be called when this is evaluated. */
 } _lair_function;
 
 /**
@@ -52,14 +52,24 @@ _lair_env *_lair_standard_env();
 _lair_function *_lair_add_builtin_function(_lair_env *env,
 		const char *name,
 		const int argc,
-		struct _lair_type *(*func_ptr)(LAIR_FUNCTION_SIG));
+		const struct _lair_type *(*func_ptr)(LAIR_FUNCTION_SIG));
 
-/*
+/**
  * Evaluates an ast node inside of the passed environment.
  * @param[in]	ast	The AST node to evaluate.
  * @param[in]	env	The environment to operate under.
  */
 const struct _lair_type *_lair_env_eval(const struct _lair_ast *ast, _lair_env *env);
+
+/**
+ * Returns the one and only 'true' lair value.
+ */
+const struct _lair_type *_lair_canonical_true();
+
+/**
+ * Returns the one and only 'false' lair value.
+ */
+const struct _lair_type *_lair_canonical_false();
 
 /**
  * Frees the stuff in an environment, and the env itself.

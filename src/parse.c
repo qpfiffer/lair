@@ -20,6 +20,7 @@ inline char *_friendly_enum(const LAIR_TOKEN val) {
 		case LR_ATOM:			return "ATOM";
 		case LR_NUM:			return "NUM";
 		case LR_CALL:			return "CALL";
+		case LR_BOOL:			return "BOOL";
 		default:				return "ERR";
 	}
 }

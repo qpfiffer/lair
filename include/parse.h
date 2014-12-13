@@ -21,6 +21,7 @@ typedef enum {
 	LR_EOF, /**	EOF token. */
 	LR_STRING, /**	A string constant. */
 	LR_CALL, /**	A function call. */
+	LR_BOOL, /**	A boolean. */
 	LR_ATOM, /**	Atomic symbol. Reference to either a variable or a function. */
 	LR_NUM /**	A number. */
 } LAIR_TOKEN;
@@ -48,6 +49,7 @@ typedef struct _lair_token {
  * @brief	Representation of a value. This is how we hold variable information.
  */
 typedef union _lair_value {
+	unsigned char bool; /**	Boolean value. */
 	int num; /**	If this type is an integer, this will be the integer value. */
 	char *str; /**	Like `num`, but this will hold a string instead. */
 } _lair_value;

@@ -8,7 +8,7 @@
 #include "parse.h"
 #include "lair_std.h"
 
-_lair_type *_lair_builtin_operator_plus(LAIR_FUNCTION_SIG) {
+const _lair_type *_lair_builtin_operator_plus(LAIR_FUNCTION_SIG) {
 	check(argc == 2, ERR_RUNTIME, "Incorrect number of arguments to `+` function.");
 	check(argv[0] != NULL, ERR_RUNTIME, "Argument to `+` function was NULL.");
 	check(argv[1] != NULL, ERR_RUNTIME, "Argument to `+` function was NULL.");
@@ -55,7 +55,37 @@ _lair_type *_lair_builtin_operator_plus(LAIR_FUNCTION_SIG) {
 	return NULL;
 }
 
-_lair_type *_lair_builtin_print(LAIR_FUNCTION_SIG) {
+const _lair_type *_lair_builtin_operator_eq(LAIR_FUNCTION_SIG) {
+	check(argc == 2, ERR_RUNTIME, "Incorrect number of arguments to `=` function.");
+	check(argv[0] != NULL, ERR_RUNTIME, "Argument to `=` function was NULL.");
+	check(argv[1] != NULL, ERR_RUNTIME, "Argument to `=` function was NULL.");
+	check(argv[0]->type == argv[1]->type, ERR_RUNTIME, "Cannot compare disparate types.");
+
+	const LAIR_TOKEN first_arg_type = argv[0]->type;
+	switch (first_arg_type) {
+		case LR_BOOL:
+			if (argv[0]->value.bool == argv[1]->value.bool)
+				return _lair_canonical_true();
+			return _lair_canonical_false();
+		case LR_NUM:
+			if (argv[0]->value.num == argv[1]->value.num)
+				return _lair_canonical_true();
+			return _lair_canonical_false();
+		case LR_STRING: {
+			const char *str0 = argv[0]->value.str;
+			const char *str1 = argv[1]->value.str;
+			const size_t str_siz = strlen(str0) + strlen(str1);
+			if (strncmp(str0, str1, str_siz) == 0)
+				return _lair_canonical_true();
+			return _lair_canonical_false();
+		}
+		default:
+			error_and_die(ERR_RUNTIME, "Don't know how to compare these two things.");
+	}
+	return NULL;
+}
+
+const _lair_type *_lair_builtin_print(LAIR_FUNCTION_SIG) {
 	check(argc == 1, ERR_RUNTIME, "Incorrect number of arguments to 'print' function.");
 
 	if (argv[0] == NULL) {

@@ -32,11 +32,14 @@ const inline _lair_type *_lair_canonical_true() {
 _lair_env *_lair_standard_env() {
 	_lair_env *std_env = calloc(1, sizeof(_lair_env));
 
+	_lair_function *_print = _lair_add_builtin_function(std_env, "print", 1, &_lair_builtin_print);
+	check(_print != NULL, ERR_RUNTIME, "Could not build standard env.");
+
 	_lair_function *_plus = _lair_add_builtin_function(std_env, "+", 2, &_lair_builtin_operator_plus);
 	check(_plus != NULL, ERR_RUNTIME, "Could not build standard env.");
 
-	_lair_function *_print = _lair_add_builtin_function(std_env, "print", 1, &_lair_builtin_print);
-	check(_print != NULL, ERR_RUNTIME, "Could not build standard env.");
+	_lair_function *_eq = _lair_add_builtin_function(std_env, "eq", 1, &_lair_builtin_operator_eq);
+	check(_eq != NULL, ERR_RUNTIME, "Could not build standard env.");
 
 	return std_env;
 }

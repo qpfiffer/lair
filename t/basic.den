@@ -3,9 +3,12 @@
 return_10
     : 10
 
+random_array
+    : return_10 return_str "Help, T a" 4 5
+
 return_str
     : "foo"
 
-! print "Hello"
+! print "This is a super long string with spaces in it."
 ! print ! return_10
 ! print ! return_str

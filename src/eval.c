@@ -67,23 +67,32 @@ int _lair_add_builtin_function(_lair_env *env,
 
 }
 
-static _lair_type **_get_function_args(const int argc, const _lair_ast *ast_node, _lair_env *env) {
+static const _lair_type **_get_function_args(const int argc, const _lair_ast *ast_node, _lair_env *env) {
 	if (ast_node->next->atom.type == LR_CALL) {
-		check(argc == 1, ERR_RUNTIME, "Function takes more than one argument, but RHS is a function call.");
+		check(argc > 1, ERR_RUNTIME, "Function takes more than one argument, but RHS is only one argument.");
 		/* We need to evaluate the RHS before we can pass it to the function
 		 * as arguments.
 		 */
-		const _lair_type **args = calloc(1, sizeof(lair_type *));
+		const _lair_type **args = calloc(1, sizeof(_lair_type *));
 		args[0] = _lair_env_eval(ast_node->next, env);
 		return args;
-	} else {
 	}
+
+	const _lair_type **args = calloc(argc, sizeof(_lair_type *));
+	const _lair_ast *cur_node = ast_node;
+	int i = 0;
+	for (;i < argc; i++) {
+		check(cur_node != NULL, ERR_RUNTIME, "Not enough arguments to function.");
+		args[i] = _lair_env_eval(cur_node, env);
+		cur_node = cur_node->next;
+	}
+	return args;
 }
 
 static const _lair_type *_lair_call_builtin(const _lair_ast *ast_node, _lair_env *env, const _lair_function *builtin_function) {
 	int argc = builtin_function->argc;
-	_lair_type **argv = _get_function_args(argc, ast_node);
-	return builtin_function->function_ptr(builtin_function->argc, args);
+	const _lair_type **argv = _get_function_args(argc, ast_node, env);
+	return builtin_function->function_ptr(builtin_function->argc, argv);
 }
 
 static const _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_env *env) {
@@ -110,7 +119,8 @@ static const _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_en
 		_func_eval_ast = _func_eval_ast->next;
 	}
 
-	_lair_type **args = _get_function_args(argc, ast_node, env);
+	const _lair_type **args = _get_function_args(argc, ast_node, env);
+	check(args != NULL, ERR_RUNTIME, "No arguments.");
 	return NULL;
 }
 

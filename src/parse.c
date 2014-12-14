@@ -203,6 +203,7 @@ _lair_token *_lair_tokenize(const char *program, const size_t len) {
 						else\
 							new_token->token_type = LR_FUNCTION;\
 
+			int extra_modified = 0;
 			if (new_token->prev != NULL) {
 				switch (new_token->prev->token_type) {
 					case LR_FUNCTION:
@@ -216,14 +217,52 @@ _lair_token *_lair_tokenize(const char *program, const size_t len) {
 						CALL_OR_FUNCTION
 						break;
 					default:
-						_intuit_token_type(new_token, stripped);
+						/* Check to see if we hit a space in the middle of a string. */
+						if (stripped[0] == '"' && stripped[stripped_len - 1] != '"') {
+							// this is a "test of the thing" okay
+							// |--------->    <-----------------|
+							const size_t start = token - line.data;
+							const size_t end = line.size;
+							char remaining[end - start];
+							memset(remaining, '\0', end - start);
+							memcpy(remaining, stripped, stripped_len);
+							remaining[stripped_len] = ' ';
+							int i;
+							size_t new_len = stripped_len + 1;
+							int found_end = 0;
+							for(i = stripped_len + start + 1; i < end; i++) {
+								new_len++;
+								remaining[i - start] = line.data[i];
+
+								if (line.data[i] == '"') {
+									remaining[i] = '\0';
+									found_end = 1;
+									break;
+								}
+							}
+
+							if (!found_end)
+								error_and_die(ERR_SYNTAX, "String has no ending \".");
+
+							free(new_token->token_str);
+							new_token->token_str = calloc(1, new_len);
+							memcpy(new_token->token_str, remaining, new_len);
+
+							_intuit_token_type(new_token, remaining);
+
+							extra_modified = 1;
+							token = strtok((char *)line.data + strlen(remaining), " ");
+						} else {
+							_intuit_token_type(new_token, stripped);
+						}
 				}
 			} else {
 				CALL_OR_FUNCTION
 			}
 
 
-			token = strtok(NULL, " ");
+			if (extra_modified == 0)
+				token = strtok(NULL, " ");
 			newline = 0;
 		}
 

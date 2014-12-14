@@ -124,6 +124,7 @@ static const _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_en
 	if (argc > 0) {
 		const _lair_type **args = _get_function_args(argc, ast_node, env);
 		check(args != NULL, ERR_RUNTIME, "No arguments.");
+		check(1 == 0, ERR_RUNTIME, "Not implemented yet.");
 	} else {
 		return _lair_env_eval(_func_eval_ast, env);
 	}

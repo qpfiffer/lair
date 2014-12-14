@@ -32,20 +32,19 @@ const inline _lair_type *_lair_canonical_true() {
 _lair_env *_lair_standard_env() {
 	_lair_env *std_env = calloc(1, sizeof(_lair_env));
 
-	_lair_function *_print = _lair_add_builtin_function(std_env, "print", 1, &_lair_builtin_print);
-	check(_print != NULL, ERR_RUNTIME, "Could not build standard env.");
+	int rc = _lair_add_builtin_function(std_env, "print", 1, &_lair_builtin_print);
+	check(rc == 0, ERR_RUNTIME, "Could not build standard env.");
 
-	_lair_function *_plus = _lair_add_builtin_function(std_env, "+", 2, &_lair_builtin_operator_plus);
-	check(_plus != NULL, ERR_RUNTIME, "Could not build standard env.");
+	rc = _lair_add_builtin_function(std_env, "+", 2, &_lair_builtin_operator_plus);
+	check(rc == 0, ERR_RUNTIME, "Could not build standard env.");
 
-	_lair_function *_eq = _lair_add_builtin_function(std_env, "eq", 1, &_lair_builtin_operator_eq);
-	check(_eq != NULL, ERR_RUNTIME, "Could not build standard env.");
+	rc = _lair_add_builtin_function(std_env, "eq", 1, &_lair_builtin_operator_eq);
+	check(rc == 0, ERR_RUNTIME, "Could not build standard env.");
 
 	return std_env;
 }
 
-_lair_function *
-_lair_add_builtin_function(_lair_env *env,
+int _lair_add_builtin_function(_lair_env *env,
 		const char *name,
 		const int argc,
 		const struct _lair_type *(*func_ptr)(LAIR_FUNCTION_SIG)) {
@@ -56,19 +55,15 @@ _lair_add_builtin_function(_lair_env *env,
 	/* Check to see if that function already exists: */
 	const _lair_function *existing_func = _tst_map_get(env->c_functions, name, strlen(name));
 	if (existing_func != NULL)
-		return NULL;
+		return 1;
 
 	_lair_function _stack_func = {
 		.argc = argc,
 		.argv = calloc(argc, sizeof(_lair_type)),
 		.function_ptr = func_ptr
 	};
-	_lair_function *new_func = calloc(1, sizeof(_lair_function));
-	memcpy(new_func, &_stack_func, sizeof(_lair_function));
 
-	_tst_map_insert(&(env->c_functions), name, strlen(name), new_func, sizeof(_lair_function));
-
-	return new_func;
+	return _tst_map_insert(&(env->c_functions), name, strlen(name), &_stack_func, sizeof(_lair_function));
 
 }
 
@@ -116,7 +111,7 @@ static const _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_en
 	}
 
 	if (argc > 0) {
-		check(1 == 0, ERR_RUNTIME, "Not yet implemented.");
+		check(1 == 0, ERR_RUNTIME, "Multi-argument functions not yet implemented.");
 	} else {
 		return _lair_env_eval(_func_eval_ast, env);
 	}
@@ -125,6 +120,9 @@ static const _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_en
 }
 
 const _lair_type *_lair_env_eval(const struct _lair_ast *ast, _lair_env *env) {
+	/* We have a goto here to avoid creating a new stack frame, when we really just
+	 * want to call this function again.
+	 */
 start_eval:
 	switch (ast->atom.type) {
 		case LR_CALL:
@@ -137,6 +135,9 @@ start_eval:
 			ast = ast->next;
 			goto start_eval;
 		case LR_RETURN:
+			/* TODO: We actually want to return everything to the right of the
+			 * operator until a DEDENT or an EOF.
+			 */
 			return &ast->next->atom;
 		default:
 			return &ast->atom;
@@ -168,8 +169,13 @@ int _lair_eval(const struct _lair_ast *root) {
 	return 0;
 }
 
+void builtin_cleanup(void *c_function) {
+	_lair_function *f = (_lair_function *)c_function;
+	free(f->argv);
+}
+
 void _lair_free_env(_lair_env *env) {
-	_tst_map_destroy(env->c_functions);
-	_tst_map_destroy(env->functions);
+	_tst_map_destroy(env->c_functions, builtin_cleanup);
+	_tst_map_destroy(env->functions, NULL);
 	free(env);
 }

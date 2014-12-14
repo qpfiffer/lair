@@ -57,6 +57,51 @@ const void *_tst_map_get(_tst_map_node *current_node, const char *key, const siz
 	}
 }
 
-void _tst_map_destroy(_tst_map_node *root) {
+/* struct used to teardown the map. */
+struct destroy_queue {
+	struct destroy_queue *next;
+	void *data;
+};
+
+static inline void dq_push(struct destroy_queue **top, void *data) {
+	struct destroy_queue *to_push = NULL;
+	to_push = calloc(1, sizeof(struct destroy_queue));
+	to_push->next = *top;
+	to_push->data = data;
+	*top = to_push;
+}
+
+static inline void *dq_pop(struct destroy_queue **stack) {
+	struct destroy_queue *top = *stack;
+	*stack = top->next;
+	void *data = top->data;
+
+	free(top);
+	return data;
+}
+
+void _tst_map_destroy(_tst_map_node *root, void (*per_value_cleanup)(void *data)) {
 	/* TODO: This whole function. */
+	struct destroy_queue *top = calloc(1, sizeof(struct destroy_queue));
+	dq_push(&top, root);
+
+	while (top->next != NULL) {
+		_tst_map_node *cur_node = (_tst_map_node *)dq_pop(&top);
+
+		if (cur_node->lokid != NULL)
+			dq_push(&top, (void *)cur_node->lokid);
+
+		if (cur_node->eqkid != NULL)
+			dq_push(&top, (void *)cur_node->eqkid);
+
+		if (cur_node->hikid != NULL)
+			dq_push(&top, (void *)cur_node->hikid);
+
+		if (per_value_cleanup != NULL && cur_node->value != NULL)
+			per_value_cleanup(cur_node->value);
+		free(cur_node->value);
+		free(cur_node);
+	}
+
+	free(top);
 }

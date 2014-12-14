@@ -39,6 +39,7 @@ int lair_execute(const char *program, const size_t len) {
 		return 1;
 
 	_lair_eval(ast);
+	_lair_free_tokens(tokens);
 	return 0;
 
 error:

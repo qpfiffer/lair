@@ -342,6 +342,7 @@ static _lair_ast *_parse_from_token(_lair_token **tokens) {
 	} else {
 		_lair_ast *to_return = calloc(1, sizeof(_lair_ast));
 		to_return->atom = _lair_atomize_token(current_token);
+		_lair_free_token(current_token);
 		return to_return;
 	}
 
@@ -358,8 +359,8 @@ _lair_ast *_lair_parse_from_tokens(_lair_token **tokens) {
 	while ((*tokens) != NULL) {
 		_lair_ast *to_append = _parse_from_token(tokens);
 
-		_lair_token *unused_dedent = _pop_token(tokens);
-		_lair_free_token(unused_dedent);
+		_lair_token *unused = _pop_token(tokens);
+		_lair_free_token(unused);
 
 		if (ast_root->children == NULL) {
 			ast_root->children = to_append;

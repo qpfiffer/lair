@@ -41,15 +41,13 @@ _lair_env *_lair_standard_env();
 
 /**
  * Adds a function to an environment.
- * On sucess, returns a pointer to a `_lair_arguments` struct with the argc count set to
- * the required number of arguments to the function.
- * On failure, returns NULL.
+ * Returns 0 on success.
  * @param[in]	env		The environment to add the function to.
  * @param[in]	name	The name/symbol of the function.
  * @param[in]	argc	The argument require count for the function to be added.
  * @param[in]	func_ptr	The function to evaluate.
  */
-_lair_function *_lair_add_builtin_function(_lair_env *env,
+int _lair_add_builtin_function(_lair_env *env,
 		const char *name,
 		const int argc,
 		const struct _lair_type *(*func_ptr)(LAIR_FUNCTION_SIG));

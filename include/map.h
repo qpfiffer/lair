@@ -47,5 +47,7 @@ const int _tst_map_delete(_tst_map_node *root, const char *key, const size_t kle
 
 /**
  * Frees the entire tree.
+ * @param[in]	root	The root node.
+ * @param[in]	per_value_cleanup	Optional callback function that will be called right before the vale is freed.
  */
-void _tst_map_destroy(_tst_map_node *root);
+void _tst_map_destroy(_tst_map_node *root, void (*per_value_cleanup)(void *data));

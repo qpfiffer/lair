@@ -357,8 +357,11 @@ static _lair_ast *_parse_from_token(_lair_token **tokens) {
 	if (current_token->token_type == LR_FUNCTION ||
 		current_token->token_type == LR_CALL) {
 		/* Atomize the function, stick it at the head of the list. */
+		_lair_ast _stack_ast = {
+			.atom = _lair_atomize_token(current_token)
+		};
 		_lair_ast *list = calloc(1, sizeof(_lair_ast));
-		list->atom = _lair_atomize_token(current_token);
+		memcpy(list, &_stack_ast, sizeof(_lair_ast));
 
 		/* We break out of the loop when we find an EOF or a DEDENT. */
 		_lair_ast *cur_ast_item = list;
@@ -379,8 +382,11 @@ static _lair_ast *_parse_from_token(_lair_token **tokens) {
 		}
 		return list;
 	} else {
+		_lair_ast _stack_ast = {
+			.atom = _lair_atomize_token(current_token)
+		};
 		_lair_ast *to_return = calloc(1, sizeof(_lair_ast));
-		to_return->atom = _lair_atomize_token(current_token);
+		memcpy(to_return, &_stack_ast, sizeof(_lair_ast));
 		_lair_free_token(current_token);
 		return to_return;
 	}

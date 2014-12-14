@@ -81,6 +81,8 @@ static inline void *dq_pop(struct destroy_queue **stack) {
 }
 
 void _tst_map_destroy(_tst_map_node *root, void (*per_value_cleanup)(void *data)) {
+	if (root == NULL)
+		return;
 	/* TODO: This whole function. */
 	struct destroy_queue *top = calloc(1, sizeof(struct destroy_queue));
 	dq_push(&top, root);

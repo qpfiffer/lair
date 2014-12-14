@@ -152,6 +152,7 @@ _lair_token *_lair_tokenize(const char *program, const size_t len) {
 
 		/* Read in a token: */
 		char *token = strtok((char *)line.data, " ");
+		int indentation_level = token - line.data;
 		while (token != NULL) {
 			/* Is it a comment? Ignore the rest of the line. */
 			if (token[0] == '#')
@@ -170,12 +171,13 @@ _lair_token *_lair_tokenize(const char *program, const size_t len) {
 					_lair_token *new_token = calloc(1, sizeof(_lair_token));
 					new_token->token_str = NULL;
 					new_token->token_type = LR_INDENT;
-					new_token->indent_level = token - line.data;
+					new_token->indent_level = indentation_level;
 					_insert_token(&tokens, new_token);
 				} else {
 					_lair_token *new_token = calloc(1, sizeof(_lair_token));
 					new_token->token_str = NULL;
 					new_token->token_type = LR_DEDENT;
+					new_token->indent_level = indentation_level;
 					_insert_token(&tokens, new_token);
 				}
 			}	
@@ -183,6 +185,7 @@ _lair_token *_lair_tokenize(const char *program, const size_t len) {
 			/* Create the shell of the new token and insert it. */
 			_lair_token *new_token = calloc(1, sizeof(_lair_token));
 			new_token->token_str = calloc(1, strlen(token) + 1);
+			new_token->indent_level = indentation_level;
 
 			/* Copy the string representation of the token into the stack. */
 			const size_t new_token_len = strlen(token);

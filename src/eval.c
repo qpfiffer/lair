@@ -67,23 +67,23 @@ int _lair_add_builtin_function(_lair_env *env,
 
 }
 
-static const _lair_type *_lair_call_builtin(const _lair_ast *ast_node, _lair_env *env, const _lair_function *builtin_function) {
+static _lair_type **_get_function_args(const int argc, const _lair_ast *ast_node, _lair_env *env) {
 	if (ast_node->next->atom.type == LR_CALL) {
+		check(argc == 1, ERR_RUNTIME, "Function takes more than one argument, but RHS is a function call.");
 		/* We need to evaluate the RHS before we can pass it to the function
 		 * as arguments.
 		 */
-		const _lair_type *args[1];
+		const _lair_type **args = calloc(1, sizeof(lair_type *));
 		args[0] = _lair_env_eval(ast_node->next, env);
-		return builtin_function->function_ptr(builtin_function->argc, args);
+		return args;
 	} else {
-		check(1 == 0, ERR_RUNTIME, "Not yet implemented.");
-		//_lair_ast *cur_node = ast_node->next;
-		//int i;
-		//for (i = 0; i < builtin_function->argc; i++) {
-		//}
 	}
+}
 
-	return NULL;
+static const _lair_type *_lair_call_builtin(const _lair_ast *ast_node, _lair_env *env, const _lair_function *builtin_function) {
+	int argc = builtin_function->argc;
+	_lair_type **argv = _get_function_args(argc, ast_node);
+	return builtin_function->function_ptr(builtin_function->argc, args);
 }
 
 static const _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_env *env) {
@@ -110,16 +110,12 @@ static const _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_en
 		_func_eval_ast = _func_eval_ast->next;
 	}
 
-	if (argc > 0) {
-		check(1 == 0, ERR_RUNTIME, "Multi-argument functions not yet implemented.");
-	} else {
-		return _lair_env_eval(_func_eval_ast, env);
-	}
-
+	_lair_type **args = _get_function_args(argc, ast_node, env);
 	return NULL;
 }
 
-const _lair_type *_lair_env_eval(const struct _lair_ast *ast, _lair_env *env) {
+/* Inline to avoid another stack frame. */
+const inline _lair_type *_lair_env_eval(const struct _lair_ast *ast, _lair_env *env) {
 	/* We have a goto here to avoid creating a new stack frame, when we really just
 	 * want to call this function again.
 	 */

@@ -6,5 +6,6 @@ return_10
 return_str
     : "foo"
 
+! print "Hello"
 ! print ! return_10
 ! print ! return_str

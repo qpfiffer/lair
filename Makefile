@@ -1,4 +1,4 @@
-CFLAGS=-Werror -Wall -O2 -g3
+CFLAGS=-Werror -Wall -g3
 INCLUDES=-I./include/
 NAME=lair
 

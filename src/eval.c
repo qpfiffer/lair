@@ -68,8 +68,10 @@ int _lair_add_builtin_function(_lair_env *env,
 }
 
 static const _lair_type **_get_function_args(const int argc, const _lair_ast *ast_node, _lair_env *env) {
+	if (argc == 0)
+		return NULL;
 	if (ast_node->next->atom.type == LR_CALL) {
-		check(argc > 1, ERR_RUNTIME, "Function takes more than one argument, but RHS is only one argument.");
+		check(argc == 1, ERR_RUNTIME, "Function takes more than one argument, but RHS is only one argument.");
 		/* We need to evaluate the RHS before we can pass it to the function
 		 * as arguments.
 		 */
@@ -119,8 +121,12 @@ static const _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_en
 		_func_eval_ast = _func_eval_ast->next;
 	}
 
-	const _lair_type **args = _get_function_args(argc, ast_node, env);
-	check(args != NULL, ERR_RUNTIME, "No arguments.");
+	if (argc > 0) {
+		const _lair_type **args = _get_function_args(argc, ast_node, env);
+		check(args != NULL, ERR_RUNTIME, "No arguments.");
+	} else {
+		return _lair_env_eval(_func_eval_ast, env);
+	}
 	return NULL;
 }
 

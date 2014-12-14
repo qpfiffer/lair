@@ -29,5 +29,5 @@ void error_and_die(const ERROR_TYPE err_type, const char *msg) {
 	sprintf(buf + strlen(buf), ": %s\n", msg);
 	printf("%s", buf);
 
-	exit(0);
+	exit(1);
 }

@@ -1,3 +1,4 @@
+[![Build Status](https://drone.io/github.com/qpfiffer/lair/status.png)](https://drone.io/github.com/qpfiffer/lair/latest)
 # Done status
 
 - [x] Can print stuff

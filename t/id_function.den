@@ -1,0 +1,11 @@
+id a
+    : ! a
+
+foo
+    : "Foo"
+
+# Doesn't work yet, because foo has an 'LR_ATOM' type and not an
+# LR_FUNCTION type:
+! print ! id foo
+
+! print ! id "bar"

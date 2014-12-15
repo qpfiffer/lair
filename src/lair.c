@@ -21,7 +21,7 @@ char *lair_load_file(const char *file_path, size_t *buf_size) {
 
 	*buf_size = st.st_size;
 	char *loaded = mmap(NULL, *buf_size, PROT_READ, MAP_PRIVATE, fd, 0);
-	if (loaded == MAP_FAILED)
+	if (loaded == MAP_FAILED || loaded == NULL)
 		return NULL;
 
 	close(fd);

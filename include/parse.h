@@ -58,7 +58,7 @@ typedef union _lair_value {
  * @brief	Meta-information about a `_lair_value`.
  */
 typedef struct _lair_type {
-	const LAIR_TOKEN type; /**	This lets us know what kind of type the value is. Number, string, etc. */
+	LAIR_TOKEN type; /**	This lets us know what kind of type the value is. Number, string, etc. */
 	_lair_value value; /**	The actual value. */
 } _lair_type;
 

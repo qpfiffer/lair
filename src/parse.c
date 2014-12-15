@@ -120,6 +120,9 @@ static void _insert_token(_lair_token **head, _lair_token *to_insert) {
 
 static void _intuit_token_type(_lair_token *new_token, const char *stripped) {
 	const size_t stripped_len = strlen(stripped);
+	/* TODO: Check to see if single character strings are actually
+	 * operators. 'a', for instance, is not an operator.
+	 */
 	if (stripped_len == 1) {
 		if (stripped[0] == ':')
 			new_token->token_type = LR_RETURN;
@@ -245,7 +248,7 @@ _lair_token *_lair_tokenize(const char *program, const size_t len) {
 								error_and_die(ERR_SYNTAX, "String has no ending \".");
 
 							free(new_token->token_str);
-							new_token->token_str = calloc(1, new_len);
+							new_token->token_str = calloc(1, new_len + 1);
 							memcpy(new_token->token_str, remaining, new_len);
 
 							_intuit_token_type(new_token, remaining);

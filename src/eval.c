@@ -64,7 +64,6 @@ int _lair_add_builtin_function(_lair_env *env,
 	};
 
 	return _tst_map_insert(&(env->c_functions), name, strlen(name), &_stack_func, sizeof(_lair_function));
-
 }
 
 static const _lair_type **_get_function_args(const int argc, const _lair_ast *ast_node, _lair_env *env) {
@@ -97,6 +96,43 @@ static const _lair_type *_lair_call_builtin(const _lair_ast *ast_node, _lair_env
 	return builtin_function->function_ptr(builtin_function->argc, argv);
 }
 
+_lair_env *_lair_env_with_parent(const _lair_env *parent) {
+	_lair_env *std_env = calloc(1, sizeof(_lair_env));
+	std_env->parent = parent;
+	return std_env;
+}
+
+/* This function creates a simple function that just returns a single value. It is
+ * effectively an immuteable variable defined in the scope `env`.
+ */
+static int _lair_add_simple_function(_lair_env *env, const char *name, const _lair_type *value) {
+	/* This is kind of dumb but whatever. */
+	_lair_ast *mem_chunk = calloc(4, sizeof(_lair_ast));
+
+	_lair_ast *val = mem_chunk + (sizeof(_lair_ast) * 3);
+	val->atom.type = value->type;
+	/* HOLY SHIT UNIONS ARE AWESOME */
+	val->atom.value = value->value;
+
+	_lair_ast *ret = mem_chunk + (sizeof(_lair_ast) * 2);
+	ret->atom.type = LR_RETURN;
+	ret->next = val;
+
+	_lair_ast *indent = mem_chunk + sizeof(_lair_ast);
+	indent->atom.type = LR_INDENT;
+	indent->next = ret;
+
+	_lair_ast *func = mem_chunk;
+	func->atom.type = LR_FUNCTION;
+	func->next = indent;
+	/* We don't have to fill out the function and it's values here because the
+	 * evaluator just ignores it. It's only important that we have the name
+	 * in the functions map.
+	 */
+
+	return _tst_map_insert(&(env->functions), name, strlen(name), func, sizeof(_lair_ast));
+}
+
 static const _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_env *env) {
 	/* Determine if the thing we're trying to call is a function
 	 * or not. It might be an atom, in which case we need to check
@@ -115,7 +151,8 @@ static const _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_en
 
 	/* Figure out how many arguments are require for this function. */
 	int argc = 0;
-	_lair_ast *_func_eval_ast = ((_lair_ast *)defined_function_ast)->next;
+	_lair_ast *_first_function_arg = ((_lair_ast *)defined_function_ast)->next;
+	_lair_ast *_func_eval_ast = _first_function_arg;
 	while (_func_eval_ast->atom.type == LR_FUNCTION_ARG) {
 		argc++;
 		_func_eval_ast = _func_eval_ast->next;
@@ -124,15 +161,56 @@ static const _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_en
 	if (argc > 0) {
 		const _lair_type **args = _get_function_args(argc, ast_node, env);
 		check(args != NULL, ERR_RUNTIME, "No arguments.");
-		check(1 == 0, ERR_RUNTIME, "Not implemented yet.");
+
+		/* So heres how this works. What we do is create a new `_lair_env` object
+		 * with the parent set to the current `env`, and then we dynamically
+		 * create new 'functions' which return the function arguments. Since there
+		 * are no real variables in Den, we just create functions that return the
+		 * values that we want, and bind them into the local scope. Or something like
+		 * that.
+		 */
+		_lair_env *scoped_env = _lair_env_with_parent(env);
+		int i;
+		_lair_ast *function_parameter = _first_function_arg;
+		for (i = 0; i < argc; i++) {
+			check(function_parameter->atom.type == LR_FUNCTION_ARG, ERR_SYNTAX,
+					"Ran out of function argument parameters, buf function expects more.");
+			_lair_add_simple_function(scoped_env, function_parameter->atom.value.str, args[i]);
+			function_parameter = function_parameter->next;
+		}
+		const _lair_type *to_return = _lair_env_eval(_func_eval_ast, scoped_env);
+		_lair_free_env(scoped_env);
+		return to_return;
 	} else {
 		return _lair_env_eval(_func_eval_ast, env);
 	}
 	return NULL;
 }
 
+static const int _redefine_ast_node(_lair_ast *ast_node, const _lair_env *env) {
+	/* This function attempts to modify an LR_ATOM into something more useful. */
+	check(ast_node->atom.type == LR_ATOM, ERR_RUNTIME,
+			"For some reason we tried to modify the type of a non-atom.");
+	const char *func_name = ast_node->atom.value.str;
+	const size_t func_len = strlen(ast_node->atom.value.str);
+
+	const _lair_function *builtin_function = _tst_map_get(env->c_functions, func_name, func_len);
+	if (builtin_function != NULL) {
+		ast_node->atom.type = LR_FUNCTION;
+		return 0;
+	}
+
+	const _lair_ast *defined_function_ast = _tst_map_get(env->functions, func_name, func_len);
+	if (defined_function_ast != NULL) {
+		ast_node->atom.type = LR_FUNCTION;
+		return 0;
+	}
+
+	return 1;
+}
+
 /* Inline to avoid another stack frame. */
-const inline _lair_type *_lair_env_eval(const struct _lair_ast *ast, _lair_env *env) {
+const inline _lair_type *_lair_env_eval(const _lair_ast *ast, _lair_env *env) {
 	/* We have a goto here to avoid creating a new stack frame, when we really just
 	 * want to call this function again.
 	 */
@@ -141,17 +219,15 @@ start_eval:
 		case LR_CALL:
 			return _lair_call_function(ast->next, env);
 		case LR_ATOM:
-			/* TODO: See if the value of this ATOM is actually a function.
-			 * Then eval that.
-			 */
+			/* TODO: This is really dirty. Don't discard const. */
+			if (_redefine_ast_node((_lair_ast *)ast, env) != 0)
+				error_and_die(ERR_RUNTIME, "Function is undefined.");
+			return &ast->atom;
 		case LR_INDENT:
 			ast = ast->next;
 			goto start_eval;
 		case LR_RETURN:
-			/* TODO: We actually want to return everything to the right of the
-			 * operator until a DEDENT or an EOF.
-			 */
-			return &ast->next->atom;
+			return _lair_env_eval(ast->next, env);
 		default:
 			return &ast->atom;
 	}

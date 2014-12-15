@@ -187,8 +187,30 @@ static const _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_en
 	return NULL;
 }
 
+static const int _redefine_ast_node(_lair_ast *ast_node, const _lair_env *env) {
+	/* This function attempts to modify an LR_ATOM into something more useful. */
+	check(ast_node->atom.type == LR_ATOM, ERR_RUNTIME,
+			"For some reason we tried to modify the type of a non-atom.");
+	const char *func_name = ast_node->atom.value.str;
+	const size_t func_len = strlen(ast_node->atom.value.str);
+
+	const _lair_function *builtin_function = _tst_map_get(env->c_functions, func_name, func_len);
+	if (builtin_function != NULL) {
+		ast_node->atom.type = LR_FUNCTION;
+		return 0;
+	}
+
+	const _lair_ast *defined_function_ast = _tst_map_get(env->functions, func_name, func_len);
+	if (defined_function_ast != NULL) {
+		ast_node->atom.type = LR_FUNCTION;
+		return 0;
+	}
+
+	return 1;
+}
+
 /* Inline to avoid another stack frame. */
-const inline _lair_type *_lair_env_eval(const struct _lair_ast *ast, _lair_env *env) {
+const inline _lair_type *_lair_env_eval(const _lair_ast *ast, _lair_env *env) {
 	/* We have a goto here to avoid creating a new stack frame, when we really just
 	 * want to call this function again.
 	 */
@@ -197,9 +219,10 @@ start_eval:
 		case LR_CALL:
 			return _lair_call_function(ast->next, env);
 		case LR_ATOM:
-			/* TODO: See if the value of this ATOM is actually a function.
-			 * Then eval that.
-			 */
+			/* TODO: This is really dirty. Don't discard const. */
+			if (_redefine_ast_node((_lair_ast *)ast, env) != 0)
+				error_and_die(ERR_RUNTIME, "Function is undefined.");
+			return &ast->atom;
 		case LR_INDENT:
 			ast = ast->next;
 			goto start_eval;

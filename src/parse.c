@@ -120,6 +120,9 @@ static void _insert_token(_lair_token **head, _lair_token *to_insert) {
 
 static void _intuit_token_type(_lair_token *new_token, const char *stripped) {
 	const size_t stripped_len = strlen(stripped);
+	/* TODO: Check to see if single character strings are actually
+	 * operators. 'a', for instance, is not an operator.
+	 */
 	if (stripped_len == 1) {
 		if (stripped[0] == ':')
 			new_token->token_type = LR_RETURN;

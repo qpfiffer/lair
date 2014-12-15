@@ -10,7 +10,7 @@ return_str
     : "foo"
 
 id a
-    : a
+    : ! a
 
 ! print "This is a super long string with spaces in it."
 ! print ! return_10

@@ -38,7 +38,7 @@ _lair_env *_lair_standard_env() {
 	rc = _lair_add_builtin_function(std_env, "+", 2, &_lair_builtin_operator_plus);
 	check(rc == 0, ERR_RUNTIME, "Could not build standard env.");
 
-	rc = _lair_add_builtin_function(std_env, "eq", 1, &_lair_builtin_operator_eq);
+	rc = _lair_add_builtin_function(std_env, "=", 1, &_lair_builtin_operator_eq);
 	check(rc == 0, ERR_RUNTIME, "Could not build standard env.");
 
 	return std_env;
@@ -55,7 +55,7 @@ int _lair_add_builtin_function(_lair_env *env,
 	/* Check to see if that function already exists: */
 	const _lair_function *existing_func = _tst_map_get(env->c_functions, name, strlen(name));
 	if (existing_func != NULL)
-		return 1;
+		error_and_die(ERR_RUNTIME, "Cannot override builtin functions.");
 
 	_lair_function _stack_func = {
 		.argc = argc,
@@ -118,22 +118,7 @@ static int _lair_add_simple_function(_lair_env *env, const char *name, const _la
 	return _tst_map_insert(&(env->not_variables), name, strlen(name), &val, sizeof(_lair_ast));
 }
 
-static const _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_env *env) {
-	/* Determine if the thing we're trying to call is a function
-	 * or not. It might be an atom, in which case we need to check
-	 * or function/c_function maps to see if it's in there.
-	 */
-	const char *func_name = ast_node->atom.value.str;
-	const size_t func_len = strlen(ast_node->atom.value.str);
-
-	const _lair_function *builtin_function = _tst_map_get(env->c_functions, func_name, func_len);
-	if (builtin_function != NULL)
-		return _lair_call_builtin(ast_node, env, builtin_function);
-
-	/* Well if we're at this point this is a program-defined function. */
-	const _lair_ast *defined_function_ast = _tst_map_get(env->functions, func_name, func_len);
-	check(defined_function_ast != NULL, ERR_RUNTIME, "No such function.");
-
+static const _lair_type *_lair_call_runtime_function(const _lair_ast *top_level_ast, const _lair_ast *defined_function_ast, _lair_env *env) {
 	/* Figure out how many arguments are require for this function. */
 	int argc = 0;
 	_lair_ast *_first_function_arg = ((_lair_ast *)defined_function_ast)->next;
@@ -144,7 +129,7 @@ static const _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_en
 	}
 
 	if (argc > 0) {
-		const _lair_type **args = _get_function_args(argc, ast_node, env);
+		const _lair_type **args = _get_function_args(argc, top_level_ast, env);
 		check(args != NULL, ERR_RUNTIME, "No arguments.");
 
 		/* So heres how this works. What we do is create a new `_lair_env` object
@@ -169,6 +154,31 @@ static const _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_en
 	} else {
 		return _lair_env_eval(_func_eval_ast, env);
 	}
+}
+
+static const _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_env *env) {
+	/* Determine if the thing we're trying to call is a function
+	 * or not. It might be an atom, in which case we need to check
+	 * or function/c_function maps to see if it's in there.
+	 */
+	const char *func_name = ast_node->atom.value.str;
+	const size_t func_len = strlen(ast_node->atom.value.str);
+
+	const _lair_env *cur_env = env;
+	while (cur_env != NULL) {
+		const _lair_function *builtin_function = _tst_map_get(env->c_functions, func_name, func_len);
+		if (builtin_function != NULL)
+			return _lair_call_builtin(ast_node, env, builtin_function);
+
+		/* Well if we're at this point this is a program-defined function. */
+		const _lair_ast *defined_function_ast = _tst_map_get(env->functions, func_name, func_len);
+		if (defined_function_ast != NULL)
+			return _lair_call_runtime_function(ast_node, defined_function_ast, env);
+
+		cur_env = cur_env->parent;
+	}
+
+	error_and_die(ERR_RUNTIME, "No such function.");
 	return NULL;
 }
 
@@ -212,6 +222,8 @@ const inline _lair_type *_lair_env_eval(const _lair_ast *ast, _lair_env *env) {
 	const _lair_ast *possible_new_atom = NULL;
 start_eval:
 	switch (ast->atom.type) {
+		case LR_OPERATOR:
+			return _lair_call_function(ast, env);
 		case LR_CALL:
 			return _lair_call_function(ast->next, env);
 		case LR_ATOM:

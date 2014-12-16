@@ -162,6 +162,7 @@ static const _lair_type *_lair_call_runtime_function(const _lair_ast *top_level_
 }
 
 static const _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_env *env) {
+	check(ast_node->atom.type == LR_FUNCTION || ast_node->atom.type == LR_ATOM, ERR_RUNTIME, "Cannot call a non-function.");
 	/* Determine if the thing we're trying to call is a function
 	 * or not. It might be an atom, in which case we need to check
 	 * or function/c_function maps to see if it's in there.

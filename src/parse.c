@@ -118,6 +118,25 @@ static void _insert_token(_lair_token **head, _lair_token *to_insert) {
 	to_insert->prev = current;
 }
 
+static const int _is_valid_string(const char *stripped, const size_t stripped_len) {
+	if (stripped[0] == '"' && stripped[stripped_len - 1] == '"')
+		return 1;
+	return 0;
+}
+
+static const int _is_operator(const char *stripped, const size_t stripped_len) {
+	switch (stripped[0]) {
+		case '+':
+		case '-':
+		case '=':
+		case '%':
+		case '?':
+			return 1;
+		default:
+			return 0;
+	}
+}
+
 static void _intuit_token_type(_lair_token *new_token, const char *stripped) {
 	const size_t stripped_len = strlen(stripped);
 	/* TODO: Check to see if single character strings are actually
@@ -128,20 +147,24 @@ static void _intuit_token_type(_lair_token *new_token, const char *stripped) {
 			new_token->token_type = LR_RETURN;
 		else if (stripped[0] == '!')
 			new_token->token_type = LR_CALL;
-		else
+		else if (_is_operator(stripped, stripped_len))
 			new_token->token_type = LR_OPERATOR;
+		else if (_is_valid_string(stripped, stripped_len))
+			new_token->token_type = LR_STRING;
+		else if (_is_all_numbers(stripped))
+			new_token->token_type = LR_NUM;
+		else
+			new_token->token_type = LR_ATOM;
 	} else {
 		if (stripped[0] == '"') {
-			if (stripped[stripped_len - 1] == '"') {
-				new_token->token_type = LR_STRING;
-			} else {
+			if (!_is_valid_string(stripped, stripped_len))
 				error_and_die(ERR_SYNTAX, "String has no ending \".");
-			}
-		} else if (_is_all_numbers(stripped)) {
+			else
+				new_token->token_type = LR_STRING;
+		} else if (_is_all_numbers(stripped))
 			new_token->token_type = LR_NUM;
-		} else {
+		else
 			new_token->token_type = LR_ATOM;
-		}
 	}
 }
 

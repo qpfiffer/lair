@@ -1,11 +1,14 @@
-id xx
-    : xx
+id x
+    : x
 
 foo
     : "Foo"
 
-# Doesn't work yet, because foo has an 'LR_ATOM' type and not an
-# LR_FUNCTION type:
-! print ! id foo
+return_9:
+    : 9
+
+! print ! id ! foo
+
+! print ! id ! return_9
 
 ! print ! id "bar"

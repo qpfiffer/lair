@@ -4,11 +4,9 @@ id x
 foo
     : "Foo"
 
-return_9:
+return_9
     : 9
 
-! print ! id ! foo
-
 ! print ! id ! return_9
-
+! print ! id ! foo
 ! print ! id "bar"

@@ -82,6 +82,11 @@ static const _lair_type **_get_function_args(const int argc, const _lair_ast *as
 	const _lair_type **args = calloc(argc, sizeof(_lair_type *));
 	const _lair_ast *cur_node = ast_node->next;
 	int i = 0;
+	/* XXX: Bug here. You could have a function like this:
+	 * ! print ! add_two x ! add_two 2 2
+	 * Which would do something weird. Need to be able to see how far
+	 * the eval went.
+	 */
 	for (;i < argc; i++) {
 		check(cur_node != NULL, ERR_RUNTIME, "Not enough arguments to function.");
 		args[i] = _lair_env_eval(cur_node, env);

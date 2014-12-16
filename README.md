@@ -1,8 +1,8 @@
 # Done status
 
 - [x] Can print stuff
-- [ ] Arguments
-- [ ] Functions-as-arguments
+- [x] Arguments
+- [x] Functions-as-arguments
 - [ ] Loops
 - [ ] Arrays
 - [ ] Nested Functions

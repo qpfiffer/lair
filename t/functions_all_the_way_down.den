@@ -1,0 +1,10 @@
+a x
+    : ! b x
+
+b x
+    : ! c x
+
+c x
+    : x
+
+! print ! a "foo"

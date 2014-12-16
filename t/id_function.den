@@ -1,5 +1,5 @@
 id x
-    : x
+    : ! x
 
 foo
     : "Foo"
@@ -7,6 +7,6 @@ foo
 return_9
     : 9
 
-! print ! id ! return_9
-! print ! id ! foo
+! print ! id return_9
+! print ! id foo
 ! print ! id "bar"

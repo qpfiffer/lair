@@ -101,7 +101,7 @@ static const _lair_type *_lair_call_builtin(const _lair_ast *ast_node, _lair_env
 	return builtin_function->function_ptr(builtin_function->argc, argv);
 }
 
-_lair_env *_lair_env_with_parent(const _lair_env *parent) {
+_lair_env *_lair_env_with_parent(_lair_env *parent) {
 	_lair_env *std_env = calloc(1, sizeof(_lair_env));
 	std_env->parent = parent;
 	return std_env;
@@ -170,18 +170,22 @@ static const _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_en
 	const char *func_name = ast_node->atom.value.str;
 	const size_t func_len = strlen(ast_node->atom.value.str);
 
-	const _lair_env *cur_env = env;
+	_lair_env *cur_env = env;
 	while (cur_env != NULL) {
-		const _lair_function *builtin_function = _tst_map_get(env->c_functions, func_name, func_len);
+		const _lair_function *builtin_function = _tst_map_get(cur_env->c_functions, func_name, func_len);
 		if (builtin_function != NULL)
-			return _lair_call_builtin(ast_node, env, builtin_function);
+			return _lair_call_builtin(ast_node, cur_env, builtin_function);
 
 		/* Well if we're at this point this is a program-defined function. */
-		const _lair_ast *defined_function_ast = _tst_map_get(env->functions, func_name, func_len);
+		const _lair_ast *defined_function_ast = _tst_map_get(cur_env->functions, func_name, func_len);
 		if (defined_function_ast != NULL)
-			return _lair_call_runtime_function(ast_node, defined_function_ast, env);
+			return _lair_call_runtime_function(ast_node, defined_function_ast, cur_env);
 
-		cur_env = cur_env->parent;
+		const _lair_ast *not_variable_ast = _tst_map_get(cur_env->not_variables, func_name, func_len);
+		if (not_variable_ast != NULL)
+			return _lair_call_function(not_variable_ast, (_lair_env *)cur_env);
+
+		cur_env = (_lair_env *)cur_env->parent;
 	}
 
 	error_and_die(ERR_RUNTIME, "No such function.");

@@ -137,6 +137,19 @@ static const int _is_operator(const char *stripped, const size_t stripped_len) {
 	}
 }
 
+static const int _function_args_shadow_function(const _lair_token *new_token) {
+	const _lair_token *cur = new_token->prev;
+	while (cur != NULL) {
+		if (cur->token_type != LR_FUNCTION && cur->token_type != LR_FUNCTION_ARG)
+			break;
+		if (cur->token_str != NULL && strcmp(new_token->token_str, cur->token_str) == 0)
+			return 1;
+
+		cur = cur->prev;
+	}
+	return 0;
+}
+
 static void _intuit_token_type(_lair_token *new_token, const char *stripped) {
 	const size_t stripped_len = strlen(stripped);
 	/* TODO: Check to see if single character strings are actually
@@ -235,6 +248,8 @@ _lair_token *_lair_tokenize(const char *program, const size_t len) {
 					case LR_FUNCTION:
 					case LR_FUNCTION_ARG:
 						new_token->token_type = LR_FUNCTION_ARG;
+						if (_function_args_shadow_function(new_token))
+							error_and_die(ERR_PARSE, "Function argument names shadow function name.");
 						break;
 					case LR_INDENT:
 						_intuit_token_type(new_token, stripped);

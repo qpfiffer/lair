@@ -80,7 +80,7 @@ static const _lair_type **_get_function_args(const int argc, const _lair_ast *as
 	}
 
 	const _lair_type **args = calloc(argc, sizeof(_lair_type *));
-	const _lair_ast *cur_node = ast_node;
+	const _lair_ast *cur_node = ast_node->next;
 	int i = 0;
 	for (;i < argc; i++) {
 		check(cur_node != NULL, ERR_RUNTIME, "Not enough arguments to function.");
@@ -107,30 +107,15 @@ _lair_env *_lair_env_with_parent(const _lair_env *parent) {
  */
 static int _lair_add_simple_function(_lair_env *env, const char *name, const _lair_type *value) {
 	/* This is kind of dumb but whatever. */
-	_lair_ast *mem_chunk = calloc(4, sizeof(_lair_ast));
+	_lair_ast val = {
+		.atom = {
+			.type = value->type,
+			/* HOLY SHIT UNIONS ARE AWESOME */
+			.value = value->value
+		}
+	};
 
-	_lair_ast *val = mem_chunk + (sizeof(_lair_ast) * 3);
-	val->atom.type = value->type;
-	/* HOLY SHIT UNIONS ARE AWESOME */
-	val->atom.value = value->value;
-
-	_lair_ast *ret = mem_chunk + (sizeof(_lair_ast) * 2);
-	ret->atom.type = LR_RETURN;
-	ret->next = val;
-
-	_lair_ast *indent = mem_chunk + sizeof(_lair_ast);
-	indent->atom.type = LR_INDENT;
-	indent->next = ret;
-
-	_lair_ast *func = mem_chunk;
-	func->atom.type = LR_FUNCTION;
-	func->next = indent;
-	/* We don't have to fill out the function and it's values here because the
-	 * evaluator just ignores it. It's only important that we have the name
-	 * in the functions map.
-	 */
-
-	return _tst_map_insert(&(env->functions), name, strlen(name), func, sizeof(_lair_ast));
+	return _tst_map_insert(&(env->not_variables), name, strlen(name), &val, sizeof(_lair_ast));
 }
 
 static const _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_env *env) {
@@ -187,26 +172,36 @@ static const _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_en
 	return NULL;
 }
 
-static const int _redefine_ast_node(_lair_ast *ast_node, const _lair_env *env) {
+static const _lair_ast *_infer_atom_at_runtime(const _lair_ast *ast_node, const _lair_env *env) {
 	/* This function attempts to modify an LR_ATOM into something more useful. */
 	check(ast_node->atom.type == LR_ATOM, ERR_RUNTIME,
-			"For some reason we tried to modify the type of a non-atom.");
+			"Can't infer an already inferred atom.");
 	const char *func_name = ast_node->atom.value.str;
 	const size_t func_len = strlen(ast_node->atom.value.str);
+	_lair_ast *to_return = calloc(1, sizeof(_lair_ast));
+	memcpy(to_return, ast_node, sizeof(_lair_ast));
 
 	const _lair_function *builtin_function = _tst_map_get(env->c_functions, func_name, func_len);
 	if (builtin_function != NULL) {
-		ast_node->atom.type = LR_FUNCTION;
-		return 0;
+		to_return->atom.type = LR_FUNCTION;
+		return to_return;
 	}
 
 	const _lair_ast *defined_function_ast = _tst_map_get(env->functions, func_name, func_len);
 	if (defined_function_ast != NULL) {
-		ast_node->atom.type = LR_FUNCTION;
-		return 0;
+		to_return->atom.type = LR_FUNCTION;
+		return to_return;
 	}
 
-	return 1;
+	const _lair_ast *not_variable_ast = (_lair_ast *)_tst_map_get(env->not_variables, func_name, func_len);
+	if (not_variable_ast != NULL) {
+		to_return->atom.type = not_variable_ast->atom.type;
+		to_return->atom.value = not_variable_ast->atom.value;
+		return to_return;
+	}
+
+	free(to_return);
+	return NULL;
 }
 
 /* Inline to avoid another stack frame. */
@@ -214,15 +209,16 @@ const inline _lair_type *_lair_env_eval(const _lair_ast *ast, _lair_env *env) {
 	/* We have a goto here to avoid creating a new stack frame, when we really just
 	 * want to call this function again.
 	 */
+	const _lair_ast *possible_new_atom = NULL;
 start_eval:
 	switch (ast->atom.type) {
 		case LR_CALL:
 			return _lair_call_function(ast->next, env);
 		case LR_ATOM:
-			/* TODO: This is really dirty. Don't discard const. */
-			if (_redefine_ast_node((_lair_ast *)ast, env) != 0)
-				error_and_die(ERR_RUNTIME, "Function is undefined.");
-			return &ast->atom;
+			possible_new_atom = _infer_atom_at_runtime(ast, env);
+			if (possible_new_atom == NULL)
+				error_and_die(ERR_RUNTIME, "Atom is undefined.");
+			return &possible_new_atom->atom;
 		case LR_INDENT:
 			ast = ast->next;
 			goto start_eval;

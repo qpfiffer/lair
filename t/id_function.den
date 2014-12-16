@@ -1,5 +1,5 @@
-id a
-    : ! a
+id xx
+    : xx
 
 foo
     : "Foo"

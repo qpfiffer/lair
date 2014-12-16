@@ -100,6 +100,9 @@ const _lair_type *_lair_builtin_print(LAIR_FUNCTION_SIG) {
 	case LR_NUM:
 		printf("%i", argv[0]->value.num);
 		break;
+	case LR_FUNCTION:
+		printf("<%s: %s>", _friendly_enum(argv[0]->type), argv[0]->value.str);
+		break;
 	default:
 		printf("<%s: %p>", _friendly_enum(argv[0]->type), argv[0]);
 		break;

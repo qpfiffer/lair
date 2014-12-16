@@ -18,6 +18,7 @@ typedef struct _lair_env {
 	const struct _lair_env *parent; /**	The parent of this environment. */
 	struct _tst_map_node *c_functions; /**	C functions defined in the env. map of str -> _lair_function objects. */
 	struct _tst_map_node *functions; /**	Functions defined in the program itself. map of str -> _lair_ast objects. */
+	struct _tst_map_node *not_variables; /**	Things-that-aren't-variables in this env. They are used for binding atoms to values. */
 } _lair_env;
 
 /**

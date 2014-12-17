@@ -5,6 +5,8 @@ b x
     : ! c x
 
 c x
-    : x
+    : ! x
 
-! print ! a "foo"
+d
+    : "This is the real test."
+! print ! a d

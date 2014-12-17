@@ -174,16 +174,16 @@ static const _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_en
 	while (cur_env != NULL) {
 		const _lair_function *builtin_function = _tst_map_get(cur_env->c_functions, func_name, func_len);
 		if (builtin_function != NULL)
-			return _lair_call_builtin(ast_node, cur_env, builtin_function);
+			return _lair_call_builtin(ast_node, env, builtin_function);
 
 		/* Well if we're at this point this is a program-defined function. */
 		const _lair_ast *defined_function_ast = _tst_map_get(cur_env->functions, func_name, func_len);
 		if (defined_function_ast != NULL)
-			return _lair_call_runtime_function(ast_node, defined_function_ast, cur_env);
+			return _lair_call_runtime_function(ast_node, defined_function_ast, env);
 
 		const _lair_ast *not_variable_ast = _tst_map_get(cur_env->not_variables, func_name, func_len);
 		if (not_variable_ast != NULL)
-			return _lair_call_function(not_variable_ast, (_lair_env *)cur_env);
+			return _lair_call_function(not_variable_ast, env);
 
 		cur_env = (_lair_env *)cur_env->parent;
 	}
@@ -192,7 +192,7 @@ static const _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_en
 	return NULL;
 }
 
-static const _lair_ast *_infer_atom_at_runtime(const _lair_ast *ast_node, const _lair_env *env) {
+static const _lair_ast *_infer_atom_at_runtime(const _lair_ast *ast_node, const _lair_env *top_env) {
 	/* This function attempts to modify an LR_ATOM into something more useful. */
 	check(ast_node->atom.type == LR_ATOM, ERR_RUNTIME,
 			"Can't infer an already inferred atom.");
@@ -201,23 +201,27 @@ static const _lair_ast *_infer_atom_at_runtime(const _lair_ast *ast_node, const 
 	_lair_ast *to_return = calloc(1, sizeof(_lair_ast));
 	memcpy(to_return, ast_node, sizeof(_lair_ast));
 
-	const _lair_function *builtin_function = _tst_map_get(env->c_functions, func_name, func_len);
-	if (builtin_function != NULL) {
-		to_return->atom.type = LR_FUNCTION;
-		return to_return;
-	}
+	const _lair_env *env = top_env;
+	while (env != NULL) {
+		const _lair_function *builtin_function = _tst_map_get(env->c_functions, func_name, func_len);
+		if (builtin_function != NULL) {
+			to_return->atom.type = LR_FUNCTION;
+			return to_return;
+		}
 
-	const _lair_ast *defined_function_ast = _tst_map_get(env->functions, func_name, func_len);
-	if (defined_function_ast != NULL) {
-		to_return->atom.type = LR_FUNCTION;
-		return to_return;
-	}
+		const _lair_ast *defined_function_ast = _tst_map_get(env->functions, func_name, func_len);
+		if (defined_function_ast != NULL) {
+			to_return->atom.type = LR_FUNCTION;
+			return to_return;
+		}
 
-	const _lair_ast *not_variable_ast = (_lair_ast *)_tst_map_get(env->not_variables, func_name, func_len);
-	if (not_variable_ast != NULL) {
-		to_return->atom.type = not_variable_ast->atom.type;
-		to_return->atom.value = not_variable_ast->atom.value;
-		return to_return;
+		const _lair_ast *not_variable_ast = (_lair_ast *)_tst_map_get(env->not_variables, func_name, func_len);
+		if (not_variable_ast != NULL) {
+			to_return->atom.type = not_variable_ast->atom.type;
+			to_return->atom.value = not_variable_ast->atom.value;
+			return to_return;
+		}
+		env = env->parent;
 	}
 
 	free(to_return);

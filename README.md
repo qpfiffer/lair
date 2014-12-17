@@ -1,3 +1,6 @@
+> "It is a dark world where all you have are functions, and all you can do is
+> apply them to each other." - Anonymous
+
 # Done status
 
 - [x] Can print stuff

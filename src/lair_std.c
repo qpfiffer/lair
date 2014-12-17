@@ -43,8 +43,8 @@ const _lair_type *_lair_builtin_operator_plus(LAIR_FUNCTION_SIG) {
 			};
 
 			_lair_type *to_return = calloc(1, sizeof(_lair_type) + 1);
-			memcpy(&_stack.value.str, str0, strlen(str0));
-			memcpy(&_stack.value.str + strlen(str0), str1, strlen(str1));
+			memcpy(_stack.value.str, str0, strlen(str0));
+			memcpy(_stack.value.str + strlen(str0), str1, strlen(str1));
 			memcpy(to_return, &_stack, sizeof(_lair_type));
 
 			return to_return;

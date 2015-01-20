@@ -4,6 +4,7 @@ NAME=lair
 
 
 all: bin $(NAME)
+     -rm *.o
 
 clean:
 	rm -f *.o

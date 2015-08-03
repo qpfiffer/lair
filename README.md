@@ -6,6 +6,7 @@
 - [x] Can print stuff
 - [x] Arguments
 - [x] Functions-as-arguments
+- [ ] If statements ('?')
 - [ ] Loops
 - [ ] Arrays
 - [ ] Nested Functions

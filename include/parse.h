@@ -21,6 +21,7 @@ typedef enum {
 	LR_EOF, /**	EOF token. */
 	LR_STRING, /**	A string constant. */
 	LR_CALL, /**	A function call. */
+	LR_IF, /**	The '?' operator. If, basically. */
 	LR_BOOL, /**	A boolean. */
 	LR_ATOM, /**	Atomic symbol. Reference to either a variable or a function. */
 	LR_NUM /**	A number. */

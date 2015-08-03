@@ -38,7 +38,7 @@ _lair_env *_lair_standard_env() {
 	rc = _lair_add_builtin_function(std_env, "+", 2, &_lair_builtin_operator_plus);
 	check(rc == 0, ERR_RUNTIME, "Could not build standard env.");
 
-	rc = _lair_add_builtin_function(std_env, "=", 1, &_lair_builtin_operator_eq);
+	rc = _lair_add_builtin_function(std_env, "=", 2, &_lair_builtin_operator_eq);
 	check(rc == 0, ERR_RUNTIME, "Could not build standard env.");
 
 	return std_env;
@@ -246,6 +246,15 @@ start_eval:
 			return _lair_call_function(ast, env);
 		case LR_CALL:
 			return _lair_call_function(ast->next, env);
+		case LR_IF: {
+			const _lair_type *result = _lair_call_function(ast->next, env);
+			if (result == _lair_canonical_true())
+				error_and_die(ERR_RUNTIME, "Result was true but I don't know what to do.");
+
+			return result;
+		}
+		case LR_DEDENT:
+			error_and_die(ERR_RUNTIME, "PANIC");
 		case LR_ATOM:
 			possible_new_atom = _infer_atom_at_runtime(ast, env);
 			if (possible_new_atom == NULL)

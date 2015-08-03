@@ -20,6 +20,7 @@ inline char *_friendly_enum(const LAIR_TOKEN val) {
 		case LR_ATOM:			return "ATOM";
 		case LR_NUM:			return "NUM";
 		case LR_CALL:			return "CALL";
+		case LR_IF:				return "IF";
 		case LR_BOOL:			return "BOOL";
 		default:				return "ERR";
 	}
@@ -27,6 +28,7 @@ inline char *_friendly_enum(const LAIR_TOKEN val) {
 
 void lair_print_tokens(const _lair_token *tokens) {
 	const _lair_token *cur_tok = tokens;
+	int last_indent_level = 0;
 	while (cur_tok != NULL) {
 		const char *frnd = _friendly_enum(cur_tok->token_type);
 		switch (cur_tok->token_type) {
@@ -34,13 +36,18 @@ void lair_print_tokens(const _lair_token *tokens) {
 				printf("%s %s ", frnd, cur_tok->token_str);
 				break;
 			case LR_DEDENT:
-				printf("\n");
+				printf("\n}\n");
 				break;
 			case LR_INDENT: {
 				char lvl[cur_tok->indent_level + 1];
 				memset(lvl, ' ', cur_tok->indent_level);
 				lvl[cur_tok->indent_level] = '\0';
-				printf("\n%s", lvl);
+				if (last_indent_level < cur_tok->indent_level) {
+					printf("{\n%s", lvl);
+				} else {
+					printf("\n%s", lvl);
+				}
+				last_indent_level = cur_tok->indent_level;
 				break;
 			}
 			case LR_ERR:
@@ -160,6 +167,8 @@ static void _intuit_token_type(_lair_token *new_token, const char *stripped) {
 			new_token->token_type = LR_RETURN;
 		else if (stripped[0] == '!')
 			new_token->token_type = LR_CALL;
+		else if (stripped[0] == '?')
+			new_token->token_type = LR_IF;
 		else if (_is_operator(stripped, stripped_len))
 			new_token->token_type = LR_OPERATOR;
 		else if (_is_valid_string(stripped, stripped_len))
@@ -237,7 +246,7 @@ _lair_token *_lair_tokenize(const char *program, const size_t len) {
 			/* Actually insert it. */
 			_insert_token(&tokens, new_token);
 
-#define CALL_OR_FUNCTION if (new_token->token_str[0] == '!')\
+#define CALL_OR_FUNCTION if (new_token->token_str[0] == '!' && stripped_len == 1)\
 							new_token->token_type = LR_CALL;\
 						else\
 							new_token->token_type = LR_FUNCTION;\

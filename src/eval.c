@@ -248,8 +248,21 @@ start_eval:
 			return _lair_call_function(ast->next, env);
 		case LR_IF: {
 			const _lair_type *result = _lair_call_function(ast->next, env);
-			if (result == _lair_canonical_true())
-				error_and_die(ERR_RUNTIME, "Result was true but I don't know what to do.");
+			if (result == _lair_canonical_true()) {
+				const unsigned int initial_indent_level = ast->indent_level;
+				while (ast->indent_level == initial_indent_level) {
+					if (ast->next == NULL)
+						error_and_die(ERR_SYNTAX, "Unexpected EOF.");
+					ast = ast->next;
+				}
+
+				check(ast->indent_level > initial_indent_level, ERR_SYNTAX, "No 'True' condition to follow.");
+				/* If we're true then we want to jump to the next AST item and make sure
+				 * that it's indentation level is *higher* than ours.
+				 */
+				goto start_eval;
+			}
+			error_and_die(ERR_RUNTIME, "Result was false but I don't know what to do.");
 
 			return result;
 		}

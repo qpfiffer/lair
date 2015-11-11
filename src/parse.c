@@ -214,20 +214,16 @@ _lair_token *_lair_tokenize(const char *program, const size_t len) {
 			*/
 			if (newline != 0 && tokens != NULL) {
 				/* Dedent/indent stuff. */
+				_lair_token *new_token = calloc(1, sizeof(_lair_token));
+				new_token->token_str = NULL;
 				if (token - line.data != 0) {
 					/* line starts with spaces. */
-					_lair_token *new_token = calloc(1, sizeof(_lair_token));
-					new_token->token_str = NULL;
 					new_token->token_type = LR_INDENT;
-					new_token->indent_level = indentation_level;
-					_insert_token(&tokens, new_token);
 				} else {
-					_lair_token *new_token = calloc(1, sizeof(_lair_token));
-					new_token->token_str = NULL;
 					new_token->token_type = LR_DEDENT;
-					new_token->indent_level = indentation_level;
-					_insert_token(&tokens, new_token);
 				}
+				new_token->indent_level = indentation_level;
+				_insert_token(&tokens, new_token);
 			}	
 
 			/* Create the shell of the new token and insert it. */
@@ -404,12 +400,14 @@ void _lair_free_tokens(_lair_token *tokens) {
 static _lair_ast *_parse_from_token(_lair_token **tokens) {
 	/* "pop" the token off of the top of the stack. */
 	_lair_token *current_token = _pop_token(tokens);
+
+	/* Atomize the function, stick it at the head of the list. */
+	_lair_ast _stack_ast = {
+		.atom = _lair_atomize_token(current_token),
+		.indent_level = current_token->indent_level
+	};
 	if (current_token->token_type == LR_FUNCTION ||
 		current_token->token_type == LR_CALL) {
-		/* Atomize the function, stick it at the head of the list. */
-		_lair_ast _stack_ast = {
-			.atom = _lair_atomize_token(current_token)
-		};
 		_lair_ast *list = calloc(1, sizeof(_lair_ast));
 		memcpy(list, &_stack_ast, sizeof(_lair_ast));
 
@@ -432,9 +430,6 @@ static _lair_ast *_parse_from_token(_lair_token **tokens) {
 		}
 		return list;
 	} else {
-		_lair_ast _stack_ast = {
-			.atom = _lair_atomize_token(current_token)
-		};
 		_lair_ast *to_return = calloc(1, sizeof(_lair_ast));
 		memcpy(to_return, &_stack_ast, sizeof(_lair_ast));
 		_lair_free_token(current_token);

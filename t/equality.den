@@ -1,6 +1,7 @@
 isEqual a b
   ? = a b
-    : 1
-  : 0
+    : "True!"
+  : "False!"
 
 ! print ! isEqual 4 4
+! print ! isEqual 4 "a"

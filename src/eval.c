@@ -265,14 +265,13 @@ start_eval:
 				 */
 				unsigned int skip_indent_level = ast->indent_level;
 				while (ast->indent_level == skip_indent_level) {
-					/* This shit isn't right. Any of this logic in the next 6 lines. */
-					if (ast->indent_level < skip_indent_level)
-						break;
 					if (ast->next == NULL)
 						error_and_die(ERR_SYNTAX, "Unexpected EOF.");
 					ast = ast->next;
-					if (ast->atom.type == LR_INDENT)
+					if (ast->atom.type == LR_INDENT && ast->indent_level > skip_indent_level)
 						skip_indent_level = ast->indent_level;
+					if (ast->indent_level < skip_indent_level)
+						break;
 				}
 			}
 

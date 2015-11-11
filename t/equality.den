@@ -7,7 +7,17 @@ brokenNoTrue a b
   ? = a b
   : "False!"
 
+complexBranching a b
+  ? = a b
+    ? = a 1
+      : "a equals 1 equals b"
+    : "a equals b, but neither are 1."
+  : "Consequences will never be the same."
+
 ! print ! isEqual 4 4
 ! print ! isEqual 4 3
+! print ! complexBranching 1 1
+! print ! complexBranching 2 1
+! print ! complexBranching 2 2
 # ! print ! brokenNoTrue 4 4
 # ! print ! isEqual 4 "a"

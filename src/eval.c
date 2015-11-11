@@ -249,6 +249,9 @@ start_eval:
 		case LR_IF: {
 			const _lair_type *result = _lair_call_function(ast->next, env);
 			if (result == _lair_canonical_true()) {
+				/* If we're true then we want to jump to the next AST item and make sure
+				 * that it's indentation level is *higher* than ours.
+				 */
 				const unsigned int initial_indent_level = ast->indent_level;
 				while (ast->indent_level == initial_indent_level) {
 					if (ast->next == NULL)
@@ -257,14 +260,23 @@ start_eval:
 				}
 
 				check(ast->indent_level > initial_indent_level, ERR_SYNTAX, "No 'True' condition to follow.");
-				/* If we're true then we want to jump to the next AST item and make sure
-				 * that it's indentation level is *higher* than ours.
+			} else {
+				/* If we're false we just continue on to the next ast node LESS THAN OR EQUAL to ours.
 				 */
-				goto start_eval;
+				unsigned int skip_indent_level = ast->indent_level;
+				while (ast->indent_level == skip_indent_level) {
+					/* This shit isn't right. Any of this logic in the next 6 lines. */
+					if (ast->indent_level < skip_indent_level)
+						break;
+					if (ast->next == NULL)
+						error_and_die(ERR_SYNTAX, "Unexpected EOF.");
+					ast = ast->next;
+					if (ast->atom.type == LR_INDENT)
+						skip_indent_level = ast->indent_level;
+				}
 			}
-			error_and_die(ERR_RUNTIME, "Result was false but I don't know what to do.");
 
-			return result;
+			goto start_eval;
 		}
 		case LR_DEDENT:
 			error_and_die(ERR_RUNTIME, "PANIC");

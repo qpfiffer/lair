@@ -1,5 +1,4 @@
 append str
-  + str "bar"
-  : str
+  : + str "bar"
 
 ! print ! append "x"

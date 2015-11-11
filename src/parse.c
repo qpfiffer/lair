@@ -20,6 +20,7 @@ inline char *_friendly_enum(const LAIR_TOKEN val) {
 		case LR_ATOM:			return "ATOM";
 		case LR_NUM:			return "NUM";
 		case LR_CALL:			return "CALL";
+		case LR_IF:				return "IF";
 		case LR_BOOL:			return "BOOL";
 		default:				return "ERR";
 	}
@@ -27,6 +28,7 @@ inline char *_friendly_enum(const LAIR_TOKEN val) {
 
 void lair_print_tokens(const _lair_token *tokens) {
 	const _lair_token *cur_tok = tokens;
+	int last_indent_level = 0;
 	while (cur_tok != NULL) {
 		const char *frnd = _friendly_enum(cur_tok->token_type);
 		switch (cur_tok->token_type) {
@@ -34,13 +36,18 @@ void lair_print_tokens(const _lair_token *tokens) {
 				printf("%s %s ", frnd, cur_tok->token_str);
 				break;
 			case LR_DEDENT:
-				printf("\n");
+				printf("\n}\n");
 				break;
 			case LR_INDENT: {
 				char lvl[cur_tok->indent_level + 1];
 				memset(lvl, ' ', cur_tok->indent_level);
 				lvl[cur_tok->indent_level] = '\0';
-				printf("\n%s", lvl);
+				if (last_indent_level < cur_tok->indent_level) {
+					printf("{\n%s", lvl);
+				} else {
+					printf("\n%s", lvl);
+				}
+				last_indent_level = cur_tok->indent_level;
 				break;
 			}
 			case LR_ERR:
@@ -118,6 +125,38 @@ static void _insert_token(_lair_token **head, _lair_token *to_insert) {
 	to_insert->prev = current;
 }
 
+static const int _is_valid_string(const char *stripped, const size_t stripped_len) {
+	if (stripped[0] == '"' && stripped[stripped_len - 1] == '"')
+		return 1;
+	return 0;
+}
+
+static const int _is_operator(const char *stripped, const size_t stripped_len) {
+	switch (stripped[0]) {
+		case '+':
+		case '-':
+		case '=':
+		case '%':
+		case '?':
+			return 1;
+		default:
+			return 0;
+	}
+}
+
+static const int _function_args_shadow_function(const _lair_token *new_token) {
+	const _lair_token *cur = new_token->prev;
+	while (cur != NULL) {
+		if (cur->token_type != LR_FUNCTION && cur->token_type != LR_FUNCTION_ARG)
+			break;
+		if (cur->token_str != NULL && strcmp(new_token->token_str, cur->token_str) == 0)
+			return 1;
+
+		cur = cur->prev;
+	}
+	return 0;
+}
+
 static void _intuit_token_type(_lair_token *new_token, const char *stripped) {
 	const size_t stripped_len = strlen(stripped);
 	/* TODO: Check to see if single character strings are actually
@@ -128,20 +167,26 @@ static void _intuit_token_type(_lair_token *new_token, const char *stripped) {
 			new_token->token_type = LR_RETURN;
 		else if (stripped[0] == '!')
 			new_token->token_type = LR_CALL;
-		else
+		else if (stripped[0] == '?')
+			new_token->token_type = LR_IF;
+		else if (_is_operator(stripped, stripped_len))
 			new_token->token_type = LR_OPERATOR;
+		else if (_is_valid_string(stripped, stripped_len))
+			new_token->token_type = LR_STRING;
+		else if (_is_all_numbers(stripped))
+			new_token->token_type = LR_NUM;
+		else
+			new_token->token_type = LR_ATOM;
 	} else {
 		if (stripped[0] == '"') {
-			if (stripped[stripped_len - 1] == '"') {
-				new_token->token_type = LR_STRING;
-			} else {
+			if (!_is_valid_string(stripped, stripped_len))
 				error_and_die(ERR_SYNTAX, "String has no ending \".");
-			}
-		} else if (_is_all_numbers(stripped)) {
+			else
+				new_token->token_type = LR_STRING;
+		} else if (_is_all_numbers(stripped))
 			new_token->token_type = LR_NUM;
-		} else {
+		else
 			new_token->token_type = LR_ATOM;
-		}
 	}
 }
 
@@ -169,20 +214,16 @@ _lair_token *_lair_tokenize(const char *program, const size_t len) {
 			*/
 			if (newline != 0 && tokens != NULL) {
 				/* Dedent/indent stuff. */
+				_lair_token *new_token = calloc(1, sizeof(_lair_token));
+				new_token->token_str = NULL;
 				if (token - line.data != 0) {
 					/* line starts with spaces. */
-					_lair_token *new_token = calloc(1, sizeof(_lair_token));
-					new_token->token_str = NULL;
 					new_token->token_type = LR_INDENT;
-					new_token->indent_level = indentation_level;
-					_insert_token(&tokens, new_token);
 				} else {
-					_lair_token *new_token = calloc(1, sizeof(_lair_token));
-					new_token->token_str = NULL;
 					new_token->token_type = LR_DEDENT;
-					new_token->indent_level = indentation_level;
-					_insert_token(&tokens, new_token);
 				}
+				new_token->indent_level = indentation_level;
+				_insert_token(&tokens, new_token);
 			}	
 
 			/* Create the shell of the new token and insert it. */
@@ -201,7 +242,7 @@ _lair_token *_lair_tokenize(const char *program, const size_t len) {
 			/* Actually insert it. */
 			_insert_token(&tokens, new_token);
 
-#define CALL_OR_FUNCTION if (new_token->token_str[0] == '!')\
+#define CALL_OR_FUNCTION if (new_token->token_str[0] == '!' && stripped_len == 1)\
 							new_token->token_type = LR_CALL;\
 						else\
 							new_token->token_type = LR_FUNCTION;\
@@ -212,6 +253,8 @@ _lair_token *_lair_tokenize(const char *program, const size_t len) {
 					case LR_FUNCTION:
 					case LR_FUNCTION_ARG:
 						new_token->token_type = LR_FUNCTION_ARG;
+						if (_function_args_shadow_function(new_token))
+							error_and_die(ERR_PARSE, "Function argument names shadow function name.");
 						break;
 					case LR_INDENT:
 						_intuit_token_type(new_token, stripped);
@@ -357,12 +400,14 @@ void _lair_free_tokens(_lair_token *tokens) {
 static _lair_ast *_parse_from_token(_lair_token **tokens) {
 	/* "pop" the token off of the top of the stack. */
 	_lair_token *current_token = _pop_token(tokens);
+
+	/* Atomize the function, stick it at the head of the list. */
+	_lair_ast _stack_ast = {
+		.atom = _lair_atomize_token(current_token),
+		.indent_level = current_token->indent_level
+	};
 	if (current_token->token_type == LR_FUNCTION ||
 		current_token->token_type == LR_CALL) {
-		/* Atomize the function, stick it at the head of the list. */
-		_lair_ast _stack_ast = {
-			.atom = _lair_atomize_token(current_token)
-		};
 		_lair_ast *list = calloc(1, sizeof(_lair_ast));
 		memcpy(list, &_stack_ast, sizeof(_lair_ast));
 
@@ -385,9 +430,6 @@ static _lair_ast *_parse_from_token(_lair_token **tokens) {
 		}
 		return list;
 	} else {
-		_lair_ast _stack_ast = {
-			.atom = _lair_atomize_token(current_token)
-		};
 		_lair_ast *to_return = calloc(1, sizeof(_lair_ast));
 		memcpy(to_return, &_stack_ast, sizeof(_lair_ast));
 		_lair_free_token(current_token);

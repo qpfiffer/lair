@@ -1,0 +1,13 @@
+a x
+    : ! b x
+
+b x
+    : ! c x
+
+c x
+    : ! x
+
+d
+    : "This is the real test."
+
+! print ! a d

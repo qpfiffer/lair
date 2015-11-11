@@ -15,9 +15,10 @@ struct _tst_map_node;
  * @brief An object representing an environment in Lair.
  */
 typedef struct _lair_env {
-	const struct _lair_env *parent; /**	The parent of this environment. */
+	struct _lair_env *parent; /**	The parent of this environment. */
 	struct _tst_map_node *c_functions; /**	C functions defined in the env. map of str -> _lair_function objects. */
 	struct _tst_map_node *functions; /**	Functions defined in the program itself. map of str -> _lair_ast objects. */
+	struct _tst_map_node *not_variables; /**	Things-that-aren't-variables in this env. They are used for binding atoms to values. */
 } _lair_env;
 
 /**
@@ -44,7 +45,7 @@ _lair_env *_lair_standard_env();
  * Generates an empty environment suitable for creating scope.
  * @param[in]	parent	The parent scope.
  */
-_lair_env *_lair_env_with_parent(const _lair_env *parent);
+_lair_env *_lair_env_with_parent(_lair_env *parent);
 
 /**
  * Adds a function to an environment.

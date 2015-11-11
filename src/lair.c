@@ -34,6 +34,9 @@ int lair_execute(const char *program, const size_t len) {
 	if (tokens == NULL)
 		goto error;
 
+#ifdef DEBUG
+	lair_print_tokens(tokens);
+#endif
 	const _lair_ast *ast = _lair_parse_from_tokens(&tokens);
 	if (ast == NULL)
 		return 1;

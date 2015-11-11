@@ -43,8 +43,8 @@ const _lair_type *_lair_builtin_operator_plus(LAIR_FUNCTION_SIG) {
 			};
 
 			_lair_type *to_return = calloc(1, sizeof(_lair_type) + 1);
-			memcpy(&_stack.value.str, str0, strlen(str0));
-			memcpy(&_stack.value.str + strlen(str0), str1, strlen(str1));
+			memcpy(_stack.value.str, str0, strlen(str0));
+			memcpy(_stack.value.str + strlen(str0), str1, strlen(str1));
 			memcpy(to_return, &_stack, sizeof(_lair_type));
 
 			return to_return;
@@ -99,6 +99,9 @@ const _lair_type *_lair_builtin_print(LAIR_FUNCTION_SIG) {
 		break;
 	case LR_NUM:
 		printf("%i", argv[0]->value.num);
+		break;
+	case LR_FUNCTION:
+		printf("<%s: %s>", _friendly_enum(argv[0]->type), argv[0]->value.str);
 		break;
 	default:
 		printf("<%s: %p>", _friendly_enum(argv[0]->type), argv[0]);

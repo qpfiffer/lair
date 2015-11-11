@@ -21,6 +21,7 @@ typedef enum {
 	LR_EOF, /**	EOF token. */
 	LR_STRING, /**	A string constant. */
 	LR_CALL, /**	A function call. */
+	LR_IF, /**	The '?' operator. If, basically. */
 	LR_BOOL, /**	A boolean. */
 	LR_ATOM, /**	Atomic symbol. Reference to either a variable or a function. */
 	LR_NUM /**	A number. */
@@ -69,7 +70,8 @@ typedef struct _lair_type {
 typedef struct _lair_ast {
 	struct _lair_ast *next; /**	Next item in the list. */
 	struct _lair_ast *children; /**	Child lists. */
-	struct _lair_ast *sibling; /** If this list is a child of something else, this pointer will be this item's sibling. */
+	struct _lair_ast *sibling; /**	If this list is a child of something else, this pointer will be this item's sibling. */
+	const unsigned int indent_level; /**	The indentation level of this ast node. */
 	_lair_type atom; /**	The value of this AST object. */
 } _lair_ast;
 

@@ -20,13 +20,12 @@ inline void check(const int cond, const ERROR_TYPE err_type, const char *msg) {
 
 void error_and_die(const ERROR_TYPE err_type, const char *msg) {
 	const char *friendly_err = _friendly_err(err_type);
-	const size_t buf_size = strlen(friendly_err) + strlen(": ") + strlen(msg) + strlen("\n\0");
+	/* const size_t buf_size = strlen(friendly_err) + strlen(": ") + strlen(msg) + strlen("\n\0"); */
 
-	char buf[buf_size];
-	memset(buf, '\0', buf_size);
+	char buf[256] = {0};
 
-	sprintf(buf, "%c[%dm%s%c[%dm", 0x1B, 31, friendly_err, 0x1B, 0x0);
-	sprintf(buf + strlen(buf), ": %s\n", msg);
+	snprintf(buf, sizeof(buf), "%c[%dm%s%c[%dm", 0x1B, 31, friendly_err, 0x1B, 0x0);
+	snprintf(buf + strlen(buf), sizeof(buf), ": %s\n", msg);
 	printf("%s", buf);
 
 	exit(1);

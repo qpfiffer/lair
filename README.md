@@ -10,7 +10,7 @@
 - [x] Functions-as-arguments
 - [x] If statements ('?')
 - [ ] Loops
-- [ ] Arrays
+- [ ] Arrays/Dictionaries
 - [ ] Nested Functions
 
 This is an experimental [Den](http://wiki.xxiivv.com/den) implementation. It

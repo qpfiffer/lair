@@ -8,7 +8,7 @@
 - [x] Can print stuff
 - [x] Arguments
 - [x] Functions-as-arguments
-- [ ] If statements ('?')
+- [x] If statements ('?')
 - [ ] Loops
 - [ ] Arrays
 - [ ] Nested Functions

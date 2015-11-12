@@ -110,3 +110,11 @@ const _lair_type *_lair_builtin_print(LAIR_FUNCTION_SIG) {
 
 	return NULL;
 }
+
+const _lair_type *_lair_builtin_println(LAIR_FUNCTION_SIG) {
+	check (argc == 1, ERR_RUNTIME, "Incorrect number of arguments to 'println' function.");
+	_lair_builtin_print(argc, argv);
+	printf("\n");
+
+	return NULL;
+}

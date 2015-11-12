@@ -27,3 +27,8 @@ const struct _lair_type *_lair_builtin_operator_eq(LAIR_FUNCTION_SIG);
  * Prints a _lair_type to STDOUT.
  */
 const struct _lair_type *_lair_builtin_print(LAIR_FUNCTION_SIG);
+
+/**
+ * Prints a _lair_type to STDOUT and appends a newline character.
+ */
+const struct _lair_type *_lair_builtin_println(LAIR_FUNCTION_SIG);

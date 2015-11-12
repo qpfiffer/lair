@@ -265,6 +265,8 @@ _lair_token *_lair_tokenize(const char *program, const size_t len) {
 					default:
 						/* Check to see if we hit a space in the middle of a string. */
 						if (stripped[0] == '"' && stripped[stripped_len - 1] != '"') {
+							// TODO: Rewrite this to support multiline strings. Needs a stateful
+							// variable.
 							// this is a "test of the thing" okay
 							// |--------->    <-----------------|
 							const size_t start = token - line.data;
@@ -340,9 +342,32 @@ static char *_convert_str_token_to_str(const char *token) {
 	/* TODO: Escape stuff here. Like \r, \n, \t, etc. */
 	const size_t string_len = strlen(token);
 	const size_t new_string_len = string_len - strlen("\"\"");
-	char *to_return = calloc(1, new_string_len + 1);
+	char *to_return = malloc(new_string_len + 1);
+	to_return[new_string_len] = '\0';
 
-	memcpy(to_return, token + 1, new_string_len);
+	//memcpy(to_return, token + 1, new_string_len);
+	int offset, i;
+	for (i = 0, offset = 1; i < new_string_len; i++, offset++) {
+		if (token[offset] != '\\') {
+			to_return[i] = token[offset];
+		} else {
+			switch (token[++offset]) {
+				case 'n':
+					to_return[i] = '\n';
+					break;
+				case 'r':
+					to_return[i] = '\r';
+					break;
+				case 't':
+					to_return[i] = '\t';
+					break;
+				default:
+					to_return[i] = token[offset];
+					break;
+			}
+		}
+	}
+	to_return[i] = '\0';
 	return to_return;
 }
 

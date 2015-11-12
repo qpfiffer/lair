@@ -35,6 +35,9 @@ _lair_env *_lair_standard_env() {
 	int rc = _lair_add_builtin_function(std_env, "print", 1, &_lair_builtin_print);
 	check(rc == 0, ERR_RUNTIME, "Could not build standard env.");
 
+	rc = _lair_add_builtin_function(std_env, "println", 1, &_lair_builtin_println);
+	check(rc == 0, ERR_RUNTIME, "Could not build standard env.");
+
 	rc = _lair_add_builtin_function(std_env, "+", 2, &_lair_builtin_operator_plus);
 	check(rc == 0, ERR_RUNTIME, "Could not build standard env.");
 

@@ -19,6 +19,8 @@ typedef struct _lair_env {
 	struct _tst_map_node *c_functions; /**	C functions defined in the env. map of str -> _lair_function objects. */
 	struct _tst_map_node *functions; /**	Functions defined in the program itself. map of str -> _lair_ast objects. */
 	struct _tst_map_node *not_variables; /**	Things-that-aren't-variables in this env. They are used for binding atoms to values. */
+	const struct _lair_ast *current_function; /**	If we are operating inside of a function, this is the pointer to that node. */
+	int currently_returning; /**	Fuck a state machine. */
 } _lair_env;
 
 /**

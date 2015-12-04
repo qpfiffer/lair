@@ -170,6 +170,7 @@ static const int _is_callable(const _lair_ast *n) {
 		return 1;
 	return 0;
 }
+
 static const _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_env *env) {
 	check(_is_callable(ast_node), ERR_RUNTIME, "Cannot call a non-function.");
 	/* Determine if the thing we're trying to call is a function
@@ -187,12 +188,23 @@ static const _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_en
 
 		/* Well if we're at this point this is a program-defined function. */
 		const _lair_ast *defined_function_ast = _tst_map_get(cur_env->functions, func_name, func_len);
-		if (defined_function_ast != NULL)
-			return _lair_call_runtime_function(ast_node, defined_function_ast, env);
+		if (defined_function_ast != NULL) {
+			/* Don't call it a stack frame. */
+			const _lair_ast *last_func = env->current_function;
+			env->current_function = defined_function_ast;
+			const _lair_type *value = _lair_call_runtime_function(ast_node, defined_function_ast, env);
+			env->current_function = last_func;
+			return value;
+		}
 
 		const _lair_ast *not_variable_ast = _tst_map_get(cur_env->not_variables, func_name, func_len);
-		if (not_variable_ast != NULL)
-			return _lair_call_function(not_variable_ast, env);
+		if (not_variable_ast != NULL) {
+			const _lair_ast *last_func = env->current_function;
+			env->current_function = defined_function_ast;
+			const _lair_type *value = _lair_call_function(not_variable_ast, env);
+			env->current_function = last_func;
+			return value;
+		}
 
 		cur_env = (_lair_env *)cur_env->parent;
 	}
@@ -288,9 +300,11 @@ start_eval:
 				error_and_die(ERR_RUNTIME, "Atom is undefined.");
 			return &possible_new_atom->atom;
 		case LR_INDENT:
+			env->currently_returning = 0;
 			ast = ast->next;
 			goto start_eval;
 		case LR_RETURN:
+			env->currently_returning = 1;
 			return _lair_env_eval(ast->next, env);
 		default:
 			return &ast->atom;

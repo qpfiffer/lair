@@ -159,9 +159,6 @@ static const int _function_args_shadow_function(const _lair_token *new_token) {
 
 static void _intuit_token_type(_lair_token *new_token, const char *stripped) {
 	const size_t stripped_len = strlen(stripped);
-	/* TODO: Check to see if single character strings are actually
-	 * operators. 'a', for instance, is not an operator.
-	 */
 	if (stripped_len == 1) {
 		if (stripped[0] == ':')
 			new_token->token_type = LR_RETURN;

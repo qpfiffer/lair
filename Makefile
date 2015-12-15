@@ -1,4 +1,4 @@
-CFLAGS=-Werror -Wall -g3
+CFLAGS=-Werror -Wextra -Wall -g3 -Wno-missing-field-initializers
 INCLUDES=-I./include/
 NAME=lair
 

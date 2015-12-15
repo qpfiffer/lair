@@ -3,7 +3,7 @@
 #include <string.h>
 #include "map.h"
 
-static const int _tst_insert(_tst_map_node **cur_node, const char *key, size_t klen, const void *value, const size_t vsiz) {
+static int _tst_insert(_tst_map_node **cur_node, const char *key, size_t klen, const void *value, const size_t vsiz) {
 	/* This function is just scary looking because we're passing around pointers
 	 * to pointers. It's not that bad.
 	 */
@@ -32,7 +32,7 @@ static const int _tst_insert(_tst_map_node **cur_node, const char *key, size_t k
 	}
 }
 
-const int _tst_map_insert(_tst_map_node **root, const char *key, const size_t klen, const void *value, const size_t vsiz) {
+int _tst_map_insert(_tst_map_node **root, const char *key, const size_t klen, const void *value, const size_t vsiz) {
 	assert(key != NULL);
 	assert(klen > 0);
 

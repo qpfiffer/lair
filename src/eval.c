@@ -164,7 +164,7 @@ static const _lair_type *_lair_call_runtime_function(const _lair_ast *top_level_
 	}
 }
 
-static const int _is_callable(const _lair_ast *n) {
+static int _is_callable(const _lair_ast *n) {
 	const LAIR_TOKEN t = n->atom.type;
 	if (t == LR_FUNCTION || t == LR_ATOM || t == LR_OPERATOR)
 		return 1;

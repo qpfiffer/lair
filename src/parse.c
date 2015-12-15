@@ -28,7 +28,7 @@ inline char *_friendly_enum(const LAIR_TOKEN val) {
 
 void lair_print_tokens(const _lair_token *tokens) {
 	const _lair_token *cur_tok = tokens;
-	int last_indent_level = 0;
+	unsigned int last_indent_level = 0;
 	while (cur_tok != NULL) {
 		const char *frnd = _friendly_enum(cur_tok->token_type);
 		switch (cur_tok->token_type) {
@@ -88,7 +88,7 @@ static inline int _is_newline(const char *token) {
 }
 
 static inline int _is_all_numbers(const char *token) {
-	int i = 0;
+	unsigned int i = 0;
 	for (; i < strlen(token); i++) {
 		/* ASCII numerical values are between 0x30 and 0x39. */
 		if ((int)token[i] < 0x30 || (int)token[i] > 0x39)
@@ -98,7 +98,7 @@ static inline int _is_all_numbers(const char *token) {
 }
 
 static inline void _strip(const char *from, char *to) {
-	int i = 0, j = 0;
+	unsigned int i = 0, j = 0;
 	for (;i < strlen(from);) {
 		while (from[i] == '\n' || from[i] == '\r')
 			i++;
@@ -125,13 +125,16 @@ static void _insert_token(_lair_token **head, _lair_token *to_insert) {
 	to_insert->prev = current;
 }
 
-static const int _is_valid_string(const char *stripped, const size_t stripped_len) {
+static int _is_valid_string(const char *stripped, const size_t stripped_len) {
 	if (stripped[0] == '"' && stripped[stripped_len - 1] == '"')
 		return 1;
 	return 0;
 }
 
-static const int _is_operator(const char *stripped, const size_t stripped_len) {
+static int _is_operator(const char *stripped, const size_t stripped_len) {
+	if (stripped_len != 0)
+		return 0;
+
 	switch (stripped[0]) {
 		case '+':
 		case '-':
@@ -144,7 +147,7 @@ static const int _is_operator(const char *stripped, const size_t stripped_len) {
 	}
 }
 
-static const int _function_args_shadow_function(const _lair_token *new_token) {
+static int _function_args_shadow_function(const _lair_token *new_token) {
 	const _lair_token *cur = new_token->prev;
 	while (cur != NULL) {
 		if (cur->token_type != LR_FUNCTION && cur->token_type != LR_FUNCTION_ARG)
@@ -272,7 +275,7 @@ _lair_token *_lair_tokenize(const char *program, const size_t len) {
 							memset(remaining, '\0', end - start);
 							memcpy(remaining, stripped, stripped_len);
 							remaining[stripped_len] = ' ';
-							int i;
+							size_t i = 0;
 							size_t new_len = stripped_len + 1;
 							int found_end = 0;
 							for(i = stripped_len + start + 1; i < end; i++) {
@@ -343,7 +346,8 @@ static char *_convert_str_token_to_str(const char *token) {
 	to_return[new_string_len] = '\0';
 
 	//memcpy(to_return, token + 1, new_string_len);
-	int offset, i;
+	int offset = 0;
+	size_t i = 0;
 	for (i = 0, offset = 1; i < new_string_len; i++, offset++) {
 		if (token[offset] != '\\') {
 			to_return[i] = token[offset];

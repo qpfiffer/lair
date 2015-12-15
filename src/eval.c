@@ -1,4 +1,5 @@
 // vim: noet ts=4 sw=4
+#include <stdio.h>
 #include <string.h>
 
 #include "error.h"
@@ -172,7 +173,11 @@ static int _is_callable(const _lair_ast *n) {
 }
 
 static const _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_env *env) {
-	check(_is_callable(ast_node), ERR_RUNTIME, "Cannot call a non-function.");
+	if (!_is_callable(ast_node)) {
+		char buf[128] = {0};
+		snprintf(buf, sizeof(buf), "Cannot call a non-function: %s", _friendly_enum(ast_node->atom.type));
+		check(_is_callable(ast_node), ERR_RUNTIME, buf);
+	}
 	/* Determine if the thing we're trying to call is a function
 	 * or not. It might be an atom, in which case we need to check
 	 * or function/c_function maps to see if it's in there.
@@ -296,8 +301,11 @@ start_eval:
 			error_and_die(ERR_RUNTIME, "PANIC");
 		case LR_ATOM:
 			possible_new_atom = _infer_atom_at_runtime(ast, env);
-			if (possible_new_atom == NULL)
-				error_and_die(ERR_RUNTIME, "Atom is undefined.");
+			if (possible_new_atom == NULL) {
+				char buf[256] = {0};
+				snprintf(buf, sizeof(buf), "Atom is undefined: %s", ast->atom.value.str);
+				error_and_die(ERR_RUNTIME, buf);
+			}
 			return &possible_new_atom->atom;
 		case LR_INDENT:
 			env->currently_returning = 0;

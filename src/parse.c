@@ -22,6 +22,7 @@ inline char *_friendly_enum(const LAIR_TOKEN val) {
 		case LR_CALL:			return "CALL";
 		case LR_IF:				return "IF";
 		case LR_BOOL:			return "BOOL";
+		case LR_EOF:			return "EOF";
 		default:				return "ERR";
 	}
 }
@@ -476,7 +477,8 @@ _lair_ast *_lair_parse_from_tokens(_lair_token **tokens) {
 		_lair_ast *to_append = _parse_from_token(tokens);
 
 		_lair_token *unused = _pop_token(tokens);
-		_lair_free_token(unused);
+		if (unused != NULL)
+			_lair_free_token(unused);
 
 		if (ast_root->children == NULL) {
 			ast_root->children = to_append;

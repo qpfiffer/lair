@@ -1,8 +1,6 @@
-loop value
-  ? = value 10
-    : value
+multiline
   ! println "False"
   ! println "False"
   ! println "False"
 
-! loop 0
+! multiline

@@ -1,2 +1,1 @@
-# Testing string appending
 ! println ! + "Value is" "TEST"

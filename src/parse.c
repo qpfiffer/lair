@@ -57,6 +57,7 @@ void lair_print_tokens(const _lair_token *tokens) {
 		}
 		cur_tok = cur_tok->next;
 	}
+	printf("\n---\n");
 }
 
 static _str read_line(const char *buf) {
@@ -194,6 +195,9 @@ static void _intuit_token_type(_lair_token *new_token, const char *stripped) {
 _lair_token *_lair_tokenize(const char *program, const size_t len) {
 	_lair_token *tokens = NULL;
 	size_t num_read = 0;
+#ifdef DEBUG
+	printf("Parsing program:\n%s", program);
+#endif
 	while (num_read < len) {
 		const _str line = read_line(program + num_read);
 		num_read += line.size;
@@ -300,7 +304,7 @@ _lair_token *_lair_tokenize(const char *program, const size_t len) {
 							_intuit_token_type(new_token, remaining);
 
 							extra_modified = 1;
-							token = strtok((char *)line.data + strlen(remaining), " ");
+							token = strtok((char *)line.data + start + strlen(remaining), " ");
 						} else {
 							_intuit_token_type(new_token, stripped);
 						}

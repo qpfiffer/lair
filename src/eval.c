@@ -22,11 +22,11 @@ static const _lair_type _lair_false = {
 	}
 };
 
-const inline _lair_type *_lair_canonical_false() {
+inline const _lair_type *_lair_canonical_false() {
 	return &_lair_false;
 }
 
-const inline _lair_type *_lair_canonical_true() {
+inline const _lair_type *_lair_canonical_true() {
 	return &_lair_true;
 }
 
@@ -255,7 +255,7 @@ static const _lair_ast *_infer_atom_at_runtime(const _lair_ast *ast_node, const 
 }
 
 /* Inline to avoid another stack frame. */
-const inline _lair_type *_lair_env_eval(const _lair_ast *ast, _lair_env *env) {
+inline const _lair_type *_lair_env_eval(const _lair_ast *ast, _lair_env *env) {
 	/* We have a goto here to avoid creating a new stack frame, when we really just
 	 * want to call this function again.
 	 */

@@ -32,3 +32,8 @@ const struct _lair_type *_lair_builtin_print(LAIR_FUNCTION_SIG);
  * Prints a _lair_type to STDOUT and appends a newline character.
  */
 const struct _lair_type *_lair_builtin_println(LAIR_FUNCTION_SIG);
+
+/**
+ * Converts a type to a string.
+ */
+const struct _lair_type *_lair_builtin_str(LAIR_FUNCTION_SIG);

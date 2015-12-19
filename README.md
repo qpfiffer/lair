@@ -9,7 +9,7 @@
 - [x] Arguments
 - [x] Functions-as-arguments
 - [x] If statements ('?')
-- [ ] Loops
+- [x] Loops (In the form of recursion?)
 - [ ] Arrays/Dictionaries
 - [ ] Nested Functions
 

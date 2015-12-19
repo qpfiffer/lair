@@ -118,3 +118,38 @@ const _lair_type *_lair_builtin_println(LAIR_FUNCTION_SIG) {
 
 	return NULL;
 }
+
+const _lair_type *_lair_builtin_str(LAIR_FUNCTION_SIG) {
+	printf("ARGC IS %i", argc);
+	check (argc == 1, ERR_RUNTIME, "Incorrect number of arguments to 'str' function.");
+
+	_lair_type *new_string = calloc(1, sizeof(_lair_type));
+	new_string->type = LR_STRING;
+
+	if (argv[0] == NULL) {
+		char buf[] = "(null)";
+		strncpy(new_string->value.str, buf, sizeof(buf));
+	} else {
+		char buf[512] = {0};
+
+		switch (argv[0]->type) {
+		case LR_STRING:
+			strncpy(new_string->value.str, argv[0]->value.str, sizeof(buf));
+			break;
+		case LR_NUM:
+			snprintf(buf, sizeof(buf), "%i", argv[0]->value.num);
+			strncpy(new_string->value.str, buf, sizeof(buf));
+			break;
+		case LR_FUNCTION:
+			snprintf(buf, sizeof(buf), "<%s: %s>", _friendly_enum(argv[0]->type), argv[0]->value.str);
+			strncpy(new_string->value.str, buf, sizeof(buf));
+			break;
+		default:
+			snprintf(buf, sizeof(buf), "<%s: %p>", _friendly_enum(argv[0]->type), argv[0]);
+			strncpy(new_string->value.str, buf, sizeof(buf));
+			break;
+		}
+	}
+
+	return new_string;
+}

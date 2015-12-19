@@ -1,9 +1,8 @@
 loop value
+  # println ! + "Value is " ! str value
   ? = value 10
+    println "Holy shit the loop exited."
     : value
-  println "False"
-  println "False"
-  println "False"
   loop ! + value 1
 
 ! loop 0

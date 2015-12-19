@@ -45,6 +45,9 @@ _lair_env *_lair_standard_env() {
 	rc = _lair_add_builtin_function(std_env, "=", 2, &_lair_builtin_operator_eq);
 	check(rc == 0, ERR_RUNTIME, "Could not build standard env.");
 
+	rc = _lair_add_builtin_function(std_env, "str", 2, &_lair_builtin_str);
+	check(rc == 0, ERR_RUNTIME, "Could not build standard env.");
+
 	return std_env;
 }
 
@@ -311,8 +314,7 @@ start_eval:
 		case LR_OPERATOR:
 			return _lair_call_function(ast, env);
 		case LR_CALL:
-			ast = _call_and_continue(ast->next, env);
-			goto start_eval;
+			return _lair_call_function(ast->next, env);
 		case LR_IF:
 			ast = _evalute_if_statement(ast, env);
 			goto start_eval;

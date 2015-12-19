@@ -195,9 +195,6 @@ static void _intuit_token_type(_lair_token *new_token, const char *stripped) {
 _lair_token *_lair_tokenize(const char *program, const size_t len) {
 	_lair_token *tokens = NULL;
 	size_t num_read = 0;
-#ifdef DEBUG
-	printf("Parsing program:\n%s", program);
-#endif
 	while (num_read < len) {
 		const _str line = read_line(program + num_read);
 		num_read += line.size;
@@ -221,13 +218,13 @@ _lair_token *_lair_tokenize(const char *program, const size_t len) {
 				/* Dedent/indent stuff. */
 				_lair_token *new_token = calloc(1, sizeof(_lair_token));
 				new_token->token_str = NULL;
+				new_token->indent_level = indentation_level;
 				if (token - line.data != 0) {
 					/* line starts with spaces. */
 					new_token->token_type = LR_INDENT;
 				} else {
 					new_token->token_type = LR_DEDENT;
 				}
-				new_token->indent_level = indentation_level;
 				_insert_token(&tokens, new_token);
 			}	
 
@@ -444,12 +441,15 @@ static _lair_ast *_parse_from_token(_lair_token **tokens) {
 
 		/* We break out of the loop when we find an EOF or a DEDENT. */
 		_lair_ast *cur_ast_item = list;
+		_lair_ast *prev = NULL;
 		while (current_token->token_type != LR_DEDENT &&
 			   current_token->token_type != LR_EOF) {
 			_lair_ast *to_append = _parse_from_token(tokens);
 			cur_ast_item->next = to_append;
+			cur_ast_item->prev = prev;
 
 			/* Get the next token in line. */
+			prev = cur_ast_item;
 			cur_ast_item = cur_ast_item->next;
 			current_token = (*tokens);
 			if (current_token == NULL) {

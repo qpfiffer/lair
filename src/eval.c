@@ -167,7 +167,7 @@ static const _lair_type *_lair_call_runtime_function(const _lair_ast *top_level_
 
 static int _is_callable(const _lair_ast *n) {
 	const LAIR_TOKEN t = n->atom.type;
-	if (t == LR_FUNCTION || t == LR_ATOM || t == LR_OPERATOR)
+	if (t == LR_FUNCTION || t == LR_ATOM || t == LR_OPERATOR || t == LR_IF)
 		return 1;
 	return 0;
 }
@@ -254,49 +254,69 @@ static const _lair_ast *_infer_atom_at_runtime(const _lair_ast *ast_node, const 
 	return NULL;
 }
 
+static inline const _lair_ast *_evalute_if_statement(const _lair_ast *ast, _lair_env *env) {
+	const _lair_type *result = _lair_call_function(ast->next, env);
+	const unsigned int initial_indent_level = ast->indent_level;
+	if (result == _lair_canonical_true()) {
+		/* If we're true then we want to jump to the next AST item and make sure
+		 * that it's indentation level is *higher* than ours.
+		 */
+		while (ast->indent_level == initial_indent_level) {
+			if (ast->next == NULL)
+				error_and_die(ERR_SYNTAX, "Unexpected EOF.");
+			ast = ast->next;
+		}
+
+		check(ast->indent_level > initial_indent_level, ERR_SYNTAX, "No 'True' condition to follow.");
+	} else {
+		/* If we're false we just continue on to the next ast node LESS THAN OR EQUAL to ours.
+		*/
+		unsigned int skip_indent_level = ast->indent_level;
+		while (ast->indent_level == skip_indent_level) {
+			if (ast->next == NULL)
+				error_and_die(ERR_SYNTAX, "Unexpected EOF.");
+			ast = ast->next;
+			if (ast->atom.type == LR_INDENT && ast->indent_level > initial_indent_level)
+				skip_indent_level = ast->indent_level;
+			if (ast->indent_level < skip_indent_level)
+				break;
+		}
+	}
+
+	return ast;
+}
+
+static inline const _lair_ast *_call_and_continue(const _lair_ast *ast, _lair_env *env) {
+	_lair_call_function(ast->next, env);
+
+	/* Jump to next line here. */
+	/* while (ast->atom.type != LR_INDENT) {
+		ast = ast->next;
+		if (ast == NULL || ast->atom.type == LR_EOF)
+			break;
+	}
+
+	return ast; */
+	return ast->next;
+}
+
 /* Inline to avoid another stack frame. */
 inline const _lair_type *_lair_env_eval(const _lair_ast *ast, _lair_env *env) {
 	/* We have a goto here to avoid creating a new stack frame, when we really just
 	 * want to call this function again.
 	 */
+	/* THIS WHOLE FUCKING THING NEEDS A FINITE STATE MACHINE */
 	const _lair_ast *possible_new_atom = NULL;
 start_eval:
 	switch (ast->atom.type) {
 		case LR_OPERATOR:
 			return _lair_call_function(ast, env);
 		case LR_CALL:
-			return _lair_call_function(ast->next, env);
-		case LR_IF: {
-			const _lair_type *result = _lair_call_function(ast->next, env);
-			const unsigned int initial_indent_level = ast->indent_level;
-			if (result == _lair_canonical_true()) {
-				/* If we're true then we want to jump to the next AST item and make sure
-				 * that it's indentation level is *higher* than ours.
-				 */
-				while (ast->indent_level == initial_indent_level) {
-					if (ast->next == NULL)
-						error_and_die(ERR_SYNTAX, "Unexpected EOF.");
-					ast = ast->next;
-				}
-
-				check(ast->indent_level > initial_indent_level, ERR_SYNTAX, "No 'True' condition to follow.");
-			} else {
-				/* If we're false we just continue on to the next ast node LESS THAN OR EQUAL to ours.
-				 */
-				unsigned int skip_indent_level = ast->indent_level;
-				while (ast->indent_level == skip_indent_level) {
-					if (ast->next == NULL)
-						error_and_die(ERR_SYNTAX, "Unexpected EOF.");
-					ast = ast->next;
-					if (ast->atom.type == LR_INDENT && ast->indent_level > initial_indent_level)
-						skip_indent_level = ast->indent_level;
-					if (ast->indent_level < skip_indent_level)
-						break;
-				}
-			}
-
+			ast = _call_and_continue(ast, env);
 			goto start_eval;
-		}
+		case LR_IF:
+			ast = _evalute_if_statement(ast, env);
+			goto start_eval;
 		case LR_DEDENT:
 			error_and_die(ERR_RUNTIME, "PANIC");
 		case LR_ATOM:
@@ -306,6 +326,8 @@ start_eval:
 				snprintf(buf, sizeof(buf), "Atom is undefined: %s", ast->atom.value.str);
 				error_and_die(ERR_RUNTIME, buf);
 			}
+			if (ast->prev != NULL && ast->prev->atom.type == LR_INDENT && _is_callable(ast))
+				return _lair_call_function(ast, env);
 			return &possible_new_atom->atom;
 		case LR_INDENT:
 			env->currently_returning = 0;
@@ -317,7 +339,7 @@ start_eval:
 		default:
 			return &ast->atom;
 	}
-	/* TODO: Expire anything in this scope. */
+	/* TODO: Expire anything in this scope. Probably. */
 
 	return NULL;
 }

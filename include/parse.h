@@ -68,6 +68,7 @@ typedef struct _lair_type {
  * This is basically a list with lists in it. Each node can have children.
  */
 typedef struct _lair_ast {
+	struct _lair_ast *prev; /**	Previous item in the list. */
 	struct _lair_ast *next; /**	Next item in the list. */
 	struct _lair_ast *children; /**	Child lists. */
 	struct _lair_ast *sibling; /**	If this list is a child of something else, this pointer will be this item's sibling. */

@@ -459,6 +459,16 @@ static _lair_ast *_parse_from_token(_lair_token **tokens) {
 				return list;
 			}
 		}
+
+		if (current_token->token_type == LR_EOF) {
+			_lair_ast *to_append = _parse_from_token(tokens);
+			cur_ast_item->next = to_append;
+			cur_ast_item->prev = prev;
+
+			prev = cur_ast_item;
+			cur_ast_item = cur_ast_item->next;
+			current_token = (*tokens);
+		}
 		return list;
 	} else {
 		_lair_ast *to_return = calloc(1, sizeof(_lair_ast));

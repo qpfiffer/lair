@@ -1,8 +1,9 @@
 loop value
   ? = value 10
     : value
-  ! println "False"
-  ! println "False"
-  ! println "False"
+  println "False"
+  println "False"
+  println "False"
+  loop ! + value 1
 
 ! loop 0

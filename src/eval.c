@@ -287,17 +287,16 @@ static inline const _lair_ast *_evalute_if_statement(const _lair_ast *ast, _lair
 }
 
 static inline const _lair_ast *_call_and_continue(const _lair_ast *ast, _lair_env *env) {
-	_lair_call_function(ast->next, env);
+	_lair_call_function(ast, env);
 
 	/* Jump to next line here. */
-	/* while (ast->atom.type != LR_INDENT) {
+	while (ast->atom.type != LR_INDENT) {
 		ast = ast->next;
 		if (ast == NULL || ast->atom.type == LR_EOF)
 			break;
 	}
 
-	return ast; */
-	return ast->next;
+	return ast;
 }
 
 /* Inline to avoid another stack frame. */
@@ -312,7 +311,7 @@ start_eval:
 		case LR_OPERATOR:
 			return _lair_call_function(ast, env);
 		case LR_CALL:
-			ast = _call_and_continue(ast, env);
+			ast = _call_and_continue(ast->next, env);
 			goto start_eval;
 		case LR_IF:
 			ast = _evalute_if_statement(ast, env);
@@ -326,8 +325,13 @@ start_eval:
 				snprintf(buf, sizeof(buf), "Atom is undefined: %s", ast->atom.value.str);
 				error_and_die(ERR_RUNTIME, buf);
 			}
-			if (ast->prev != NULL && ast->prev->atom.type == LR_INDENT && _is_callable(ast))
-				return _lair_call_function(ast, env);
+			if (ast->prev != NULL && ast->prev->atom.type == LR_INDENT &&
+					_is_callable(ast)) {
+				ast = _call_and_continue(ast, env);
+				if (ast == NULL)
+					return &possible_new_atom->atom;
+				goto start_eval;
+			}
 			return &possible_new_atom->atom;
 		case LR_INDENT:
 			env->currently_returning = 0;

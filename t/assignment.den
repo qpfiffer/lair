@@ -1,0 +1,5 @@
+testAssignment a
+  b : "TEST"
+  : ! + b a
+
+! println ! testAssignment "Real test"

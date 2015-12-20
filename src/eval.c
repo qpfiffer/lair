@@ -289,16 +289,19 @@ static inline const _lair_ast *_evalute_if_statement(const _lair_ast *ast, _lair
 	return ast;
 }
 
-static inline const _lair_ast *_call_and_continue(const _lair_ast *ast, _lair_env *env) {
-	_lair_call_function(ast, env);
-
+static inline const _lair_ast *_continue(const _lair_ast *ast) {
 	/* Jump to next line here. */
 	while (ast->atom.type != LR_INDENT) {
 		ast = ast->next;
 		if (ast == NULL || ast->atom.type == LR_EOF)
 			break;
 	}
+	return ast;
+}
 
+static inline const _lair_ast *_call_and_continue(const _lair_ast *ast, _lair_env *env) {
+	_lair_call_function(ast, env);
+	ast = _continue(ast);
 	return ast;
 }
 
@@ -322,17 +325,27 @@ start_eval:
 			error_and_die(ERR_RUNTIME, "PANIC");
 		case LR_ATOM:
 			possible_new_atom = _infer_atom_at_runtime(ast, env);
-			if (possible_new_atom == NULL) {
-				char buf[256] = {0};
-				snprintf(buf, sizeof(buf), "Atom is undefined: %s", ast->atom.value.str);
-				error_and_die(ERR_RUNTIME, buf);
-			}
-			if (ast->prev != NULL && ast->prev->atom.type == LR_INDENT &&
+			if (ast->next != NULL && ast->next->atom.type == LR_RETURN) {
+				/* Evaluate the RHS, get the value. */
+				const _lair_type *ret_val = _lair_env_eval(ast->next, env);
+				/* Now stick that value as a simple function under the name of
+				 * whatever the AST's atom is.
+				 */
+				_lair_add_simple_function(env, ast->atom.value.str, ret_val);
+				ast = _continue(ast);
+				if (ast == NULL)
+					return ret_val;
+				goto start_eval;
+			} else if (ast->prev != NULL && ast->prev->atom.type == LR_INDENT &&
 					_is_callable(ast)) {
 				ast = _call_and_continue(ast, env);
 				if (ast == NULL)
 					return &possible_new_atom->atom;
 				goto start_eval;
+			} else if (possible_new_atom == NULL) {
+				char buf[256] = {0};
+				snprintf(buf, sizeof(buf), "Atom is undefined: %s", ast->atom.value.str);
+				error_and_die(ERR_RUNTIME, buf);
 			}
 			return &possible_new_atom->atom;
 		case LR_INDENT:

@@ -35,6 +35,40 @@ much a learning process as anything else.
 1. `make`
 2. Thats it. You should now have a `lair` binary.
 
+#### Debugging
+
+Edit the `Makefile` to turn on the `DEBUG` flag, then rebuild:
+
+```Makefile
+    CFLAGS=-Werror -Wextra -Wall -g3 -Wno-missing-field-initializers -DDEBUG
+```
+
+```Bash
+    make clean
+    make
+```
+
+Now you'll get extra fancy, obtuse output:
+
+```Bash
+$ ./lair t/functions_all_the_way_down.den 
+FUNCTION a FUNCTION_ARG {
+    RETURN CALL ATOM ATOM 
+}
+FUNCTION b FUNCTION_ARG 
+    RETURN CALL ATOM ATOM 
+}
+FUNCTION c FUNCTION_ARG 
+    RETURN CALL ATOM 
+}
+FUNCTION d 
+    RETURN STRING 
+}
+CALL ATOM CALL ATOM ATOM EOF 
+---
+This is the real test.
+```
+
 ### Usage
 
 Currently there is no REPL for testing, so for now usage is limited to loading

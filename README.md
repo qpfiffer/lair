@@ -28,6 +28,7 @@ much a learning process as anything else.
 * Persistent data structures
 * Immutability
 * Functions as first-class citizens
+* Low-memory footprint
 
 ### Installation
 

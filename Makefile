@@ -13,5 +13,5 @@ clean:
 	$(CC) $(CFLAGS) $(LIB_INCLUDES) $(INCLUDES) -c $<
 
 bin: $(NAME)
-$(NAME): main.o error.o lair_std.o eval.o map.o parse.o lair.o
+$(NAME): main.o gc.o vector.o error.o lair_std.o eval.o map.o parse.o lair.o
 	$(CC) $(CLAGS) $(LIB_INCLUDES) $(INCLUDES) -o $(NAME) $^ -lm $(LIBS)

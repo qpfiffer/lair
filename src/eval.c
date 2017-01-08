@@ -33,20 +33,12 @@ inline const _lair_type *_lair_canonical_true() {
 _lair_env *_lair_standard_env() {
 	_lair_env *std_env = calloc(1, sizeof(_lair_env));
 
-	int rc = _lair_add_builtin_function(std_env, "print", 1, &_lair_builtin_print);
-	check(rc == 0, ERR_RUNTIME, "Could not build standard env.");
-
-	rc = _lair_add_builtin_function(std_env, "println", 1, &_lair_builtin_println);
-	check(rc == 0, ERR_RUNTIME, "Could not build standard env.");
-
-	rc = _lair_add_builtin_function(std_env, "+", 2, &_lair_builtin_operator_plus);
-	check(rc == 0, ERR_RUNTIME, "Could not build standard env.");
-
-	rc = _lair_add_builtin_function(std_env, "=", 2, &_lair_builtin_operator_eq);
-	check(rc == 0, ERR_RUNTIME, "Could not build standard env.");
-
-	rc = _lair_add_builtin_function(std_env, "str", 2, &_lair_builtin_str);
-	check(rc == 0, ERR_RUNTIME, "Could not build standard env.");
+	int rc = 0;
+	ADD_TO_STD_ENV("print", 1, &_lair_builtin_print);
+	ADD_TO_STD_ENV("println", 1, &_lair_builtin_println);
+	ADD_TO_STD_ENV("+", 2, &_lair_builtin_operator_plus);
+	ADD_TO_STD_ENV("=", 2, &_lair_builtin_operator_eq);
+	ADD_TO_STD_ENV("str", 2, &_lair_builtin_str);
 
 	return std_env;
 }

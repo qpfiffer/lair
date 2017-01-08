@@ -1,6 +1,8 @@
 // vim: noet ts=4 sw=4
 #pragma once
 #define LAIR_FUNCTION_SIG const int argc, const struct _lair_type *argv[]
+#define ADD_TO_STD_ENV(FUNC_NAME, ARGS, PTR) rc = _lair_add_builtin_function(std_env, FUNC_NAME, ARGS, PTR);\
+	check(rc == 0, ERR_RUNTIME, "Could not build standard env.");
 /**
  * @file
  * Where the magic happens.

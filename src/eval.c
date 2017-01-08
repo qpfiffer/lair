@@ -266,7 +266,7 @@ static inline const _lair_ast *_evalute_if_statement(const _lair_ast *ast, _lair
 		 */
 		while (ast->indent_level == initial_indent_level) {
 			if (ast->next == NULL)
-				error_and_die(ERR_SYNTAX, "Unexpected EOF.");
+				error_and_die(ERR_SYNTAX, "No 'true' branch on if statement.");
 			ast = ast->next;
 		}
 

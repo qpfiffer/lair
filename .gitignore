@@ -1,5 +1,6 @@
 *.o
 *.swp
+unit_test
 lair
 lair.conf.bak
 html/

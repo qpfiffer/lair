@@ -8,6 +8,7 @@ all: unit_test bin
 
 clean:
 	rm -f *.o
+	rm -f ./unit_test
 	rm -f $(NAME)
 
 %.o: ./src/%.c

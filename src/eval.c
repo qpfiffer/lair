@@ -363,7 +363,6 @@ int _lair_eval(const struct _lair_ast *root) {
 		if (cur_ast_node->atom.type == LR_CALL) {
 			_lair_env_eval(cur_ast_node, std_env);
 		} else if (cur_ast_node->atom.type == LR_FUNCTION) {
-			/* TODO: Add functions defined in code to the env. */
 			const char *func_name = cur_ast_node->atom.value.str;
 			const size_t func_name_len = strlen(func_name);
 			_tst_map_insert(&(std_env->functions), func_name, func_name_len,

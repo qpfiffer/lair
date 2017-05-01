@@ -94,15 +94,12 @@ int main(int argc, char *argv[]) {
 
 	run_test(test_assignment);
 	run_test(test_basic);
-	run_test(test_assignment);
-	run_test(test_basic);
 	run_test(test_equality);
 	run_test(test_functions_all_the_way_down);
 	run_test(test_id_function);
 	run_test(test_loop);
 	run_test(test_multilinefunction);
 	run_test(test_objects);
-	run_test(test_plus);
 	run_test(test_plus);
 	run_test(test_shadow);
 	run_test(test_minus);

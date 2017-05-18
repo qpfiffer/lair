@@ -3,10 +3,6 @@ isEqual a b
     : "True!"
   : "False!"
 
-brokenNoTrue a b
-  ? = a b
-  : "False!"
-
 complexBranching a b
   ? = a b
     ? = a 1

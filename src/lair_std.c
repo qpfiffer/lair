@@ -50,7 +50,7 @@ const _lair_type *_lair_builtin_operator_plus(LAIR_FUNCTION_SIG) {
 			return to_return;
 		}
 		default:
-			error_and_die(ERR_RUNTIME, "Don't know how to add these things together.");
+			throw_exception(ERR_RUNTIME, "Don't know how to add these things together.");
 	}
 	return NULL;
 }
@@ -80,7 +80,7 @@ const _lair_type *_lair_builtin_operator_eq(LAIR_FUNCTION_SIG) {
 			return _lair_canonical_false();
 		}
 		default:
-			error_and_die(ERR_RUNTIME, "Don't know how to compare these two things.");
+			throw_exception(ERR_RUNTIME, "Don't know how to compare these two things.");
 	}
 	return NULL;
 }

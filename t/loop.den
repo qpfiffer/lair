@@ -1,6 +1,6 @@
 loop value
   # println ! + "Value is " ! str value
-  ? = value 100000
+  ? = value 1000
     println "Holy shit the loop exited."
     : value
   loop ! + value 1

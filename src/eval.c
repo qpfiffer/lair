@@ -54,7 +54,7 @@ int _lair_add_builtin_function(_lair_env *env,
 	/* Check to see if that function already exists: */
 	const _lair_function *existing_func = _tst_map_get(env->c_functions, name, strlen(name));
 	if (existing_func != NULL)
-		error_and_die(ERR_RUNTIME, "Cannot override builtin functions.");
+		throw_exception(ERR_RUNTIME, "Cannot override builtin functions.");
 
 	_lair_function _stack_func = {
 		.argc = argc,
@@ -209,8 +209,7 @@ static const _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_en
 		cur_env = (_lair_env *)cur_env->parent;
 	}
 
-	error_and_die(ERR_RUNTIME, "No such function.");
-	return NULL;
+	return throw_exception(ERR_RUNTIME, "No such function.");
 }
 
 static const _lair_ast *_infer_atom_at_runtime(const _lair_ast *ast_node, const _lair_env *top_env) {
@@ -314,7 +313,7 @@ start_eval:
 			ast = _evalute_if_statement(ast, env);
 			goto start_eval;
 		case LR_DEDENT:
-			error_and_die(ERR_RUNTIME, "PANIC");
+			return throw_exception(ERR_RUNTIME, "PANIC DEDENT");
 		case LR_ATOM:
 			possible_new_atom = _infer_atom_at_runtime(ast, env);
 			if (ast->next != NULL && ast->next->atom.type == LR_RETURN) {
@@ -337,7 +336,7 @@ start_eval:
 			} else if (possible_new_atom == NULL) {
 				char buf[256] = {0};
 				snprintf(buf, sizeof(buf), "Atom is undefined: %s", ast->atom.value.str);
-				error_and_die(ERR_RUNTIME, buf);
+				throw_exception(ERR_RUNTIME, buf);
 			}
 			return &possible_new_atom->atom;
 		case LR_INDENT:

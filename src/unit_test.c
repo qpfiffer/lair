@@ -16,6 +16,7 @@
 	}
 
 int _run_program(const char *filename) {
+	printf("%c[%dm%s%c[%dm\n", 0x1B, 32, filename, 0x1B, 0);
 	char *buf = NULL;
 	size_t buf_siz = 0;
 

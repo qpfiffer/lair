@@ -182,7 +182,7 @@ static void _intuit_token_type(_lair_token *new_token, const char *stripped) {
 	} else {
 		if (stripped[0] == '"') {
 			if (!_is_valid_string(stripped, stripped_len))
-				error_and_die(ERR_SYNTAX, "String has no ending \".");
+				throw_exception(ERR_SYNTAX, "String has no ending \".");
 			else
 				new_token->token_type = LR_STRING;
 		} else if (_is_all_numbers(stripped))
@@ -256,7 +256,7 @@ _lair_token *_lair_tokenize(const char *program, const size_t len) {
 					case LR_FUNCTION_ARG:
 						new_token->token_type = LR_FUNCTION_ARG;
 						if (_function_args_shadow_function(new_token))
-							error_and_die(ERR_PARSE, "Function argument names shadow function name.");
+							throw_exception(ERR_PARSE, "Function argument names shadow function name.");
 						break;
 					case LR_INDENT:
 						_intuit_token_type(new_token, stripped);
@@ -292,7 +292,7 @@ _lair_token *_lair_tokenize(const char *program, const size_t len) {
 							}
 
 							if (!found_end)
-								error_and_die(ERR_SYNTAX, "String has no ending \".");
+								throw_exception(ERR_SYNTAX, "String has no ending \".");
 
 							free(new_token->token_str);
 							new_token->token_str = calloc(1, new_len + 1);

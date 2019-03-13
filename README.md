@@ -15,7 +15,7 @@
 - [ ] Arrays/Dictionaries
 - [ ] Nested Functions
 
-This is an experimental [Den](http://wiki.xxiivv.com/den) implementation. It
+This is an experimental [Den](https://github.com/MuteLang/DenLang) implementation. It
 intends to support all of the same syntax with some extra goodies.
 
 ### Goals

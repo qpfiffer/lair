@@ -1,7 +1,5 @@
 ![Original picture David Greenwell](./lair.jpg?raw=true)
 
-[![Build Status](https://drone.io/github.com/qpfiffer/lair/status.png)](https://drone.io/github.com/qpfiffer/lair/latest)
-
 > "It is a dark world where all you have are functions, and all you can do is
 > apply them to each other." - Anonymous
 

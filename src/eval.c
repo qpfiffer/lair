@@ -8,30 +8,30 @@
 #include "map.h"
 #include "parse.h"
 
-static const _lair_type _lair_true = {
+static const struct _lair_type _lair_true = {
 	.type = LR_BOOL,
 	.value = {
 		.bool = 1
 	}
 };
 
-static const _lair_type _lair_false = {
+static const struct _lair_type _lair_false = {
 	.type = LR_BOOL,
 	.value = {
 		.bool = 0
 	}
 };
 
-inline const _lair_type *_lair_canonical_false() {
+inline const struct _lair_type *_lair_canonical_false() {
 	return &_lair_false;
 }
 
-inline const _lair_type *_lair_canonical_true() {
+inline const struct _lair_type *_lair_canonical_true() {
 	return &_lair_true;
 }
 
-_lair_env *_lair_standard_env() {
-	_lair_env *std_env = calloc(1, sizeof(_lair_env));
+struct _lair_env *_lair_standard_env() {
+	struct _lair_env *std_env = calloc(1, sizeof(struct _lair_env));
 
 	int rc = 0;
 	ADD_TO_STD_ENV("print", 1, &_lair_builtin_print);
@@ -43,7 +43,7 @@ _lair_env *_lair_standard_env() {
 	return std_env;
 }
 
-int _lair_add_builtin_function(_lair_env *env,
+int _lair_add_builtin_function(struct _lair_env *env,
 		const char *name,
 		const int argc,
 		const struct _lair_type *(*func_ptr)(LAIR_FUNCTION_SIG)) {
@@ -52,20 +52,20 @@ int _lair_add_builtin_function(_lair_env *env,
 	check(strlen(name) > 0, ERR_RUNTIME, "Function name must be more than 0 chars.");
 
 	/* Check to see if that function already exists: */
-	const _lair_function *existing_func = _tst_map_get(env->c_functions, name, strlen(name));
+	const struct _lair_function *existing_func = _tst_map_get(env->c_functions, name, strlen(name));
 	if (existing_func != NULL)
 		throw_exception(ERR_RUNTIME, "Cannot override builtin functions.");
 
-	_lair_function _stack_func = {
+	struct _lair_function _stack_func = {
 		.argc = argc,
-		.argv = calloc(argc, sizeof(_lair_type)),
+		.argv = calloc(argc, sizeof(struct _lair_type)),
 		.function_ptr = func_ptr
 	};
 
-	return _tst_map_insert(&(env->c_functions), name, strlen(name), &_stack_func, sizeof(_lair_function));
+	return _tst_map_insert(&(env->c_functions), name, strlen(name), &_stack_func, sizeof(struct _lair_function));
 }
 
-static const _lair_type **_get_function_args(const int argc, const _lair_ast *ast_node, _lair_env *env) {
+static const struct _lair_type **_get_function_args(const int argc, const struct _lair_ast *ast_node, struct _lair_env *env) {
 	if (argc == 0)
 		return NULL;
 	if (ast_node->next->atom.type == LR_CALL) {
@@ -73,13 +73,13 @@ static const _lair_type **_get_function_args(const int argc, const _lair_ast *as
 		/* We need to evaluate the RHS before we can pass it to the function
 		 * as arguments.
 		 */
-		const _lair_type **args = calloc(1, sizeof(_lair_type *));
-		args[0] = _lair_env_eval(ast_node->next, env);
+		const struct _lair_type **args = calloc(1, sizeof(struct _lair_type *));
+		args[0] =_lair_env_eval(ast_node->next, env);
 		return args;
 	}
 
-	const _lair_type **args = calloc(argc, sizeof(_lair_type *));
-	const _lair_ast *cur_node = ast_node->next;
+	const struct _lair_type **args = calloc(argc, sizeof(struct _lair_type *));
+	const struct _lair_ast *cur_node = ast_node->next;
 	int i = 0;
 	/* XXX: Bug here. You could have a function like this:
 	 * ! print ! add_two x ! add_two 2 2
@@ -94,14 +94,14 @@ static const _lair_type **_get_function_args(const int argc, const _lair_ast *as
 	return args;
 }
 
-static const _lair_type *_lair_call_builtin(const _lair_ast *ast_node, _lair_env *env, const _lair_function *builtin_function) {
+static const struct _lair_type *_lair_call_builtin(const struct _lair_ast *ast_node, struct _lair_env *env, const struct _lair_function *builtin_function) {
 	int argc = builtin_function->argc;
-	const _lair_type **argv = _get_function_args(argc, ast_node, env);
+	const struct _lair_type **argv = _get_function_args(argc, ast_node, env);
 	return builtin_function->function_ptr(builtin_function->argc, argv);
 }
 
-_lair_env *_lair_env_with_parent(_lair_env *parent) {
-	_lair_env *std_env = calloc(1, sizeof(_lair_env));
+struct _lair_env *_lair_env_with_parent(struct _lair_env *parent) {
+	struct _lair_env *std_env = calloc(1, sizeof(struct _lair_env));
 	std_env->parent = parent;
 	return std_env;
 }
@@ -109,9 +109,9 @@ _lair_env *_lair_env_with_parent(_lair_env *parent) {
 /* This function creates a simple function that just returns a single value. It is
  * effectively an immuteable variable defined in the scope `env`.
  */
-static int _lair_add_simple_function(_lair_env *env, const char *name, const _lair_type *value) {
+static int _lair_add_simple_function(struct _lair_env *env, const char *name, const struct _lair_type *value) {
 	/* This is kind of dumb but whatever. */
-	_lair_ast val = {
+	struct _lair_ast val = {
 		.atom = {
 			.type = value->type,
 			/* HOLY SHIT UNIONS ARE AWESOME */
@@ -119,40 +119,40 @@ static int _lair_add_simple_function(_lair_env *env, const char *name, const _la
 		}
 	};
 
-	return _tst_map_insert(&(env->not_variables), name, strlen(name), &val, sizeof(_lair_ast));
+	return _tst_map_insert(&(env->not_variables), name, strlen(name), &val, sizeof(struct _lair_ast));
 }
 
-static const _lair_type *_lair_call_runtime_function(const _lair_ast *top_level_ast, const _lair_ast *defined_function_ast, _lair_env *env) {
+static const struct _lair_type *_lair_call_runtime_function(const struct _lair_ast *top_level_ast, const struct _lair_ast *defined_function_ast, struct _lair_env *env) {
 	/* Figure out how many arguments are require for this function. */
 	int argc = 0;
-	_lair_ast *_first_function_arg = ((_lair_ast *)defined_function_ast)->next;
-	_lair_ast *_func_eval_ast = _first_function_arg;
+	struct _lair_ast *_first_function_arg = ((struct _lair_ast *)defined_function_ast)->next;
+	struct _lair_ast *_func_eval_ast = _first_function_arg;
 	while (_func_eval_ast->atom.type == LR_FUNCTION_ARG) {
 		argc++;
 		_func_eval_ast = _func_eval_ast->next;
 	}
 
 	if (argc > 0) {
-		const _lair_type **args = _get_function_args(argc, top_level_ast, env);
+		const struct _lair_type **args = _get_function_args(argc, top_level_ast, env);
 		check(args != NULL, ERR_RUNTIME, "No arguments.");
 
-		/* So heres how this works. What we do is create a new `_lair_env` object
+		/* So heres how this works. What we do is create a new `struct _lair_env` object
 		 * with the parent set to the current `env`, and then we dynamically
 		 * create new 'functions' which return the function arguments. Since there
 		 * are no real variables in Den, we just create functions that return the
 		 * values that we want, and bind them into the local scope. Or something like
 		 * that.
 		 */
-		_lair_env *scoped_env = _lair_env_with_parent(env);
+		struct _lair_env *scoped_env = _lair_env_with_parent(env);
 		int i;
-		_lair_ast *function_parameter = _first_function_arg;
+		struct _lair_ast *function_parameter = _first_function_arg;
 		for (i = 0; i < argc; i++) {
 			check(function_parameter->atom.type == LR_FUNCTION_ARG, ERR_SYNTAX,
 					"Ran out of function argument parameters, buf function expects more.");
 			_lair_add_simple_function(scoped_env, function_parameter->atom.value.str, args[i]);
 			function_parameter = function_parameter->next;
 		}
-		const _lair_type *to_return = _lair_env_eval(_func_eval_ast, scoped_env);
+		const struct _lair_type *to_return = _lair_env_eval(_func_eval_ast, scoped_env);
 		_lair_free_env(scoped_env);
 		return to_return;
 	} else {
@@ -160,14 +160,14 @@ static const _lair_type *_lair_call_runtime_function(const _lair_ast *top_level_
 	}
 }
 
-static int _is_callable(const _lair_ast *n) {
+static int _is_callable(const struct _lair_ast *n) {
 	const LAIR_TOKEN t = n->atom.type;
 	if (t == LR_FUNCTION || t == LR_ATOM || t == LR_OPERATOR || t == LR_IF)
 		return 1;
 	return 0;
 }
 
-static const _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_env *env) {
+static const struct _lair_type *_lair_call_function(const struct _lair_ast *ast_node, struct _lair_env *env) {
 	if (!_is_callable(ast_node)) {
 		char buf[128] = {0};
 		snprintf(buf, sizeof(buf), "Cannot call a non-function: %s", _friendly_enum(ast_node->atom.type));
@@ -180,62 +180,62 @@ static const _lair_type *_lair_call_function(const _lair_ast *ast_node, _lair_en
 	const char *func_name = ast_node->atom.value.str;
 	const size_t func_len = strlen(ast_node->atom.value.str);
 
-	_lair_env *cur_env = env;
+	struct _lair_env *cur_env = env;
 	while (cur_env != NULL) {
-		const _lair_function *builtin_function = _tst_map_get(cur_env->c_functions, func_name, func_len);
+		const struct _lair_function *builtin_function = _tst_map_get(cur_env->c_functions, func_name, func_len);
 		if (builtin_function != NULL)
 			return _lair_call_builtin(ast_node, env, builtin_function);
 
 		/* Well if we're at this point this is a program-defined function. */
-		const _lair_ast *defined_function_ast = _tst_map_get(cur_env->functions, func_name, func_len);
+		const struct _lair_ast *defined_function_ast = _tst_map_get(cur_env->functions, func_name, func_len);
 		if (defined_function_ast != NULL) {
 			/* Don't call it a stack frame. */
-			const _lair_ast *last_func = env->current_function;
+			const struct _lair_ast *last_func = env->current_function;
 			env->current_function = defined_function_ast;
-			const _lair_type *value = _lair_call_runtime_function(ast_node, defined_function_ast, env);
+			const struct _lair_type *value = _lair_call_runtime_function(ast_node, defined_function_ast, env);
 			env->current_function = last_func;
 			return value;
 		}
 
-		const _lair_ast *not_variable_ast = _tst_map_get(cur_env->not_variables, func_name, func_len);
+		const struct _lair_ast *not_variable_ast = _tst_map_get(cur_env->not_variables, func_name, func_len);
 		if (not_variable_ast != NULL) {
-			const _lair_ast *last_func = env->current_function;
+			const struct _lair_ast *last_func = env->current_function;
 			env->current_function = defined_function_ast;
-			const _lair_type *value = _lair_call_function(not_variable_ast, env);
+			const struct _lair_type *value = _lair_call_function(not_variable_ast, env);
 			env->current_function = last_func;
 			return value;
 		}
 
-		cur_env = (_lair_env *)cur_env->parent;
+		cur_env = (struct _lair_env *)cur_env->parent;
 	}
 
 	return throw_exception(ERR_RUNTIME, "No such function.");
 }
 
-static const _lair_ast *_infer_atom_at_runtime(const _lair_ast *ast_node, const _lair_env *top_env) {
+static const struct _lair_ast *_infer_atom_at_runtime(const struct _lair_ast *ast_node, const struct _lair_env *top_env) {
 	/* This function attempts to modify an LR_ATOM into something more useful. */
 	check(ast_node->atom.type == LR_ATOM, ERR_RUNTIME,
 			"Can't infer an already inferred atom.");
 	const char *func_name = ast_node->atom.value.str;
 	const size_t func_len = strlen(ast_node->atom.value.str);
-	_lair_ast *to_return = calloc(1, sizeof(_lair_ast));
-	memcpy(to_return, ast_node, sizeof(_lair_ast));
+	struct _lair_ast *to_return = calloc(1, sizeof(struct _lair_ast));
+	memcpy(to_return, ast_node, sizeof(struct _lair_ast));
 
-	const _lair_env *env = top_env;
+	const struct _lair_env *env = top_env;
 	while (env != NULL) {
-		const _lair_function *builtin_function = _tst_map_get(env->c_functions, func_name, func_len);
+		const struct _lair_function *builtin_function = _tst_map_get(env->c_functions, func_name, func_len);
 		if (builtin_function != NULL) {
 			to_return->atom.type = LR_FUNCTION;
 			return to_return;
 		}
 
-		const _lair_ast *defined_function_ast = _tst_map_get(env->functions, func_name, func_len);
+		const struct _lair_ast *defined_function_ast = _tst_map_get(env->functions, func_name, func_len);
 		if (defined_function_ast != NULL) {
 			to_return->atom.type = LR_FUNCTION;
 			return to_return;
 		}
 
-		const _lair_ast *not_variable_ast = (_lair_ast *)_tst_map_get(env->not_variables, func_name, func_len);
+		const struct _lair_ast *not_variable_ast = (struct _lair_ast *)_tst_map_get(env->not_variables, func_name, func_len);
 		if (not_variable_ast != NULL) {
 			to_return->atom.type = not_variable_ast->atom.type;
 			to_return->atom.value = not_variable_ast->atom.value;
@@ -248,8 +248,8 @@ static const _lair_ast *_infer_atom_at_runtime(const _lair_ast *ast_node, const 
 	return NULL;
 }
 
-static inline const _lair_ast *_evalute_if_statement(const _lair_ast *ast, _lair_env *env) {
-	const _lair_type *result = _lair_call_function(ast->next, env);
+static inline const struct _lair_ast *_evalute_if_statement(const struct _lair_ast *ast, struct _lair_env *env) {
+	const struct _lair_type *result = _lair_call_function(ast->next, env);
 	const unsigned int initial_indent_level = ast->indent_level;
 	if (result == _lair_canonical_true()) {
 		/* If we're true then we want to jump to the next AST item and make sure
@@ -280,7 +280,7 @@ static inline const _lair_ast *_evalute_if_statement(const _lair_ast *ast, _lair
 	return ast;
 }
 
-static inline const _lair_ast *_continue(const _lair_ast *ast) {
+static inline const struct _lair_ast *_continue(const struct _lair_ast *ast) {
 	/* Jump to next line here. */
 	while (ast->atom.type != LR_INDENT) {
 		ast = ast->next;
@@ -290,19 +290,19 @@ static inline const _lair_ast *_continue(const _lair_ast *ast) {
 	return ast;
 }
 
-static inline const _lair_ast *_call_and_continue(const _lair_ast *ast, _lair_env *env) {
+static inline const struct _lair_ast *_call_and_continue(const struct _lair_ast *ast, struct _lair_env *env) {
 	_lair_call_function(ast, env);
 	ast = _continue(ast);
 	return ast;
 }
 
 /* Inline to avoid another stack frame. */
-inline const _lair_type *_lair_env_eval(const _lair_ast *ast, _lair_env *env) {
+inline const struct _lair_type *_lair_env_eval(const struct _lair_ast *ast, struct _lair_env *env) {
 	/* We have a goto here to avoid creating a new stack frame, when we really just
 	 * want to call this function again.
 	 */
 	/* THIS WHOLE FUCKING THING NEEDS A FINITE STATE MACHINE */
-	const _lair_ast *possible_new_atom = NULL;
+	const struct _lair_ast *possible_new_atom = NULL;
 start_eval:
 	switch (ast->atom.type) {
 		case LR_OPERATOR:
@@ -318,7 +318,7 @@ start_eval:
 			possible_new_atom = _infer_atom_at_runtime(ast, env);
 			if (ast->next != NULL && ast->next->atom.type == LR_RETURN) {
 				/* Evaluate the RHS, get the value. */
-				const _lair_type *ret_val = _lair_env_eval(ast->next, env);
+				const struct _lair_type *ret_val = _lair_env_eval(ast->next, env);
 				/* Now stick that value as a simple function under the name of
 				 * whatever the AST's atom is.
 				 */
@@ -355,8 +355,8 @@ start_eval:
 }
 
 int _lair_eval(const struct _lair_ast *root) {
-	_lair_env *std_env = _lair_standard_env();
-	const _lair_ast *cur_ast_node = root->children;
+	struct _lair_env *std_env = _lair_standard_env();
+	const struct _lair_ast *cur_ast_node = root->children;
 
 	while (cur_ast_node != NULL) {
 		if (cur_ast_node->atom.type == LR_CALL) {
@@ -365,7 +365,7 @@ int _lair_eval(const struct _lair_ast *root) {
 			const char *func_name = cur_ast_node->atom.value.str;
 			const size_t func_name_len = strlen(func_name);
 			_tst_map_insert(&(std_env->functions), func_name, func_name_len,
-					cur_ast_node, sizeof(_lair_ast));
+					cur_ast_node, sizeof(struct _lair_ast));
 		}
 
 		cur_ast_node = cur_ast_node->sibling;
@@ -376,11 +376,11 @@ int _lair_eval(const struct _lair_ast *root) {
 }
 
 void builtin_cleanup(void *c_function) {
-	_lair_function *f = (_lair_function *)c_function;
+	struct _lair_function *f = (struct _lair_function *)c_function;
 	free(f->argv);
 }
 
-void _lair_free_env(_lair_env *env) {
+void _lair_free_env(struct _lair_env *env) {
 	_tst_map_destroy(env->c_functions, builtin_cleanup);
 	_tst_map_destroy(env->functions, NULL);
 	free(env);

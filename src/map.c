@@ -3,14 +3,14 @@
 #include <string.h>
 #include "map.h"
 
-static int _tst_insert(_tst_map_node **cur_node, const char *key, size_t klen, const void *value, const size_t vsiz) {
+static int _tst_insert(struct _tst_map_node **cur_node, const char *key, size_t klen, const void *value, const size_t vsiz) {
 	/* This function is just scary looking because we're passing around pointers
 	 * to pointers. It's not that bad.
 	 */
 	const char current_char = key[0];
 
 	if (*cur_node == NULL) {
-		*cur_node = calloc(1, sizeof(_tst_map_node));
+		*cur_node = calloc(1, sizeof(struct _tst_map_node));
 		(*cur_node)->node_char = current_char;
 	}
 
@@ -32,7 +32,7 @@ static int _tst_insert(_tst_map_node **cur_node, const char *key, size_t klen, c
 	}
 }
 
-int _tst_map_insert(_tst_map_node **root, const char *key, const size_t klen, const void *value, const size_t vsiz) {
+int _tst_map_insert(struct _tst_map_node **root, const char *key, const size_t klen, const void *value, const size_t vsiz) {
 	assert(key != NULL);
 	assert(klen > 0);
 
@@ -40,7 +40,7 @@ int _tst_map_insert(_tst_map_node **root, const char *key, const size_t klen, co
 	return _tst_insert(root, key, _klen, value, vsiz);
 }
 
-const void *_tst_map_get(_tst_map_node *current_node, const char *key, const size_t klen) {
+const void *_tst_map_get(struct _tst_map_node *current_node, const char *key, const size_t klen) {
 	const char current_char = key[0];
 
 	if (current_node == NULL)
@@ -80,7 +80,7 @@ static inline void *dq_pop(struct destroy_queue **stack) {
 	return data;
 }
 
-void _tst_map_destroy(_tst_map_node *root, void (*per_value_cleanup)(void *data)) {
+void _tst_map_destroy(struct _tst_map_node *root, void (*per_value_cleanup)(void *data)) {
 	if (root == NULL)
 		return;
 	/* TODO: This whole function. */
@@ -88,7 +88,7 @@ void _tst_map_destroy(_tst_map_node *root, void (*per_value_cleanup)(void *data)
 	dq_push(&top, root);
 
 	while (top->next != NULL) {
-		_tst_map_node *cur_node = (_tst_map_node *)dq_pop(&top);
+		struct _tst_map_node *cur_node = (struct _tst_map_node *)dq_pop(&top);
 
 		if (cur_node->lokid != NULL)
 			dq_push(&top, (void *)cur_node->lokid);

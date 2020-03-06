@@ -10,6 +10,15 @@
 #include "lair.h"
 #include "parse.h"
 
+struct _lair_runtime *_lair_runtime_start() {
+	struct _lair_runtime *new_runtime = calloc(1, sizeof(struct _lair_runtime));
+	return new_runtime;
+}
+
+void _lair_runtime_end(struct _lair_runtime *runtime) {
+	free(runtime);
+}
+
 char *lair_load_file(const char *file_path, size_t *buf_size) {
 	struct stat st = {0};
 	if (stat(file_path, &st) == -1)
@@ -30,23 +39,26 @@ char *lair_load_file(const char *file_path, size_t *buf_size) {
 }
 
 int lair_execute(const char *program, const size_t len) {
-	_lair_token *tokens = _lair_tokenize(program, len);
+	struct _lair_runtime *runtime = _lair_runtime_start();
+	struct _lair_token *tokens = _lair_tokenize(runtime, program, len);
 	if (tokens == NULL)
 		goto error;
 
 #ifdef DEBUG
 	lair_print_tokens(tokens);
 #endif
-	const _lair_ast *ast = _lair_parse_from_tokens(&tokens);
+	const struct _lair_ast *ast = _lair_parse_from_tokens(&tokens);
 	if (ast == NULL)
 		return 1;
 
 	_lair_eval(ast);
 	_lair_free_tokens(tokens);
+	_lair_runtime_end(runtime);
 	return 0;
 
 error:
 	_lair_free_tokens(tokens);
+	_lair_runtime_end(runtime);
 	return 1;
 }
 

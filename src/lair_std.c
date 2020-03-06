@@ -8,7 +8,7 @@
 #include "parse.h"
 #include "lair_std.h"
 
-const _lair_type *_lair_builtin_operator_plus(LAIR_FUNCTION_SIG) {
+const struct _lair_type *_lair_builtin_operator_plus(LAIR_FUNCTION_SIG) {
 	check(argc == 2, ERR_RUNTIME, "Incorrect number of arguments to `+` function.");
 	check(argv[0] != NULL, ERR_RUNTIME, "Argument to `+` function was NULL.");
 	check(argv[1] != NULL, ERR_RUNTIME, "Argument to `+` function was NULL.");
@@ -19,14 +19,14 @@ const _lair_type *_lair_builtin_operator_plus(LAIR_FUNCTION_SIG) {
 	switch (first_arg_type) {
 		/* Integer addition. */
 		case LR_NUM: {
-			_lair_type _stack = {
+			struct _lair_type _stack = {
 				.type = LR_NUM,
 				.value = {
 					.num = argv[0]->value.num + argv[1]->value.num
 				}
 			};
-			_lair_type *to_return = calloc(1, sizeof(_lair_type));
-			memcpy(to_return, &_stack, sizeof(_lair_type));
+			struct _lair_type *to_return = calloc(1, sizeof(struct _lair_type));
+			memcpy(to_return, &_stack, sizeof(struct _lair_type));
 			return to_return;
 		}
 		/* Append two strings together. */
@@ -35,17 +35,17 @@ const _lair_type *_lair_builtin_operator_plus(LAIR_FUNCTION_SIG) {
 			const char *str1 = argv[1]->value.str;
 			const size_t str_siz = strlen(str0) + strlen(str1);
 
-			_lair_type _stack = {
+			struct _lair_type _stack = {
 				.type = LR_STRING,
 				.value = {
 					.str = calloc(1, str_siz)
 				}
 			};
 
-			_lair_type *to_return = calloc(1, sizeof(_lair_type) + 1);
+			struct _lair_type *to_return = calloc(1, sizeof(struct _lair_type) + 1);
 			memcpy(_stack.value.str, str0, strlen(str0));
 			memcpy(_stack.value.str + strlen(str0), str1, strlen(str1));
-			memcpy(to_return, &_stack, sizeof(_lair_type));
+			memcpy(to_return, &_stack, sizeof(struct _lair_type));
 
 			return to_return;
 		}
@@ -55,7 +55,7 @@ const _lair_type *_lair_builtin_operator_plus(LAIR_FUNCTION_SIG) {
 	return NULL;
 }
 
-const _lair_type *_lair_builtin_operator_eq(LAIR_FUNCTION_SIG) {
+const struct _lair_type *_lair_builtin_operator_eq(LAIR_FUNCTION_SIG) {
 	check(argc == 2, ERR_RUNTIME, "Incorrect number of arguments to `=` function.");
 	check(argv[0] != NULL, ERR_RUNTIME, "Argument to `=` function was NULL.");
 	check(argv[1] != NULL, ERR_RUNTIME, "Argument to `=` function was NULL.");
@@ -85,7 +85,7 @@ const _lair_type *_lair_builtin_operator_eq(LAIR_FUNCTION_SIG) {
 	return NULL;
 }
 
-const _lair_type *_lair_builtin_print(LAIR_FUNCTION_SIG) {
+const struct _lair_type *_lair_builtin_print(LAIR_FUNCTION_SIG) {
 	check(argc == 1, ERR_RUNTIME, "Incorrect number of arguments to 'print' function.");
 
 	if (argv[0] == NULL) {
@@ -111,7 +111,7 @@ const _lair_type *_lair_builtin_print(LAIR_FUNCTION_SIG) {
 	return NULL;
 }
 
-const _lair_type *_lair_builtin_println(LAIR_FUNCTION_SIG) {
+const struct _lair_type *_lair_builtin_println(LAIR_FUNCTION_SIG) {
 	check (argc == 1, ERR_RUNTIME, "Incorrect number of arguments to 'println' function.");
 	_lair_builtin_print(argc, argv);
 	printf("\n");
@@ -119,11 +119,11 @@ const _lair_type *_lair_builtin_println(LAIR_FUNCTION_SIG) {
 	return NULL;
 }
 
-const _lair_type *_lair_builtin_str(LAIR_FUNCTION_SIG) {
+const struct _lair_type *_lair_builtin_str(LAIR_FUNCTION_SIG) {
 	printf("ARGC IS %i", argc);
 	check (argc == 1, ERR_RUNTIME, "Incorrect number of arguments to 'str' function.");
 
-	_lair_type *new_string = calloc(1, sizeof(_lair_type));
+	struct _lair_type *new_string = calloc(1, sizeof(struct _lair_type));
 	new_string->type = LR_STRING;
 
 	if (argv[0] == NULL) {

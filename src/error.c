@@ -19,9 +19,9 @@ inline void check(const int cond, const ERROR_TYPE err_type, const char *msg) {
 		throw_exception(err_type, msg);
 }
 
-const _lair_type *throw_exception(const ERROR_TYPE err_type, const char *msg) {
+const struct _lair_type *throw_exception(const ERROR_TYPE err_type, const char *msg) {
 	const char *friendly_err = _friendly_err(err_type);
-	_lair_type *new_type = calloc(1, sizeof(_lair_type));
+	struct _lair_type *new_type = calloc(1, sizeof(struct _lair_type));
 	new_type->type = LR_ERR;
 
 	char buf[256] = {0};

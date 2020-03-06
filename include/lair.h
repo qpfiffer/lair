@@ -24,3 +24,9 @@ int lair_execute(const char *program, const size_t len);
  * @param[in]	buf_size	The size of the loaded buffer.
  */
 void lair_unload_file(char *loaded, size_t buf_size);
+
+/**
+ * @brief	A lair runtime object. Holds exceptions, program state, etc.
+ */
+struct _lair_runtime {
+};

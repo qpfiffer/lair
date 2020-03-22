@@ -7,6 +7,6 @@ foo
 return_9
     : 9
 
-! print ! id return_9
-! print ! id foo
-! print ! id "bar"
+print ! id return_9
+print ! id foo
+print ! id "bar"

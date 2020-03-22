@@ -439,6 +439,7 @@ static struct _lair_ast *_parse_from_token(struct _lair_token **tokens) {
 		.atom = _lair_atomize_token(current_token),
 		.indent_level = current_token->indent_level
 	};
+
 	if (current_token->token_type == LR_FUNCTION ||
 		current_token->token_type == LR_CALL) {
 		struct _lair_ast *list = calloc(1, sizeof(struct _lair_ast));

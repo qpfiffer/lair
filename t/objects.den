@@ -1,8 +1,10 @@
-object a b
-  method1 a
-    : b
-  method2
-    + a b
-    : a
-  : 0
+Numbers val1 val2
+  Value1 : val1
+  Value2 : val2
+  add
+    : + Value1 Value2
+  sub
+    : - Value1 Value2
 
+test : Numbers 10 5
+test.add

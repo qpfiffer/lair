@@ -2,4 +2,4 @@ testAssignment a
   b : "TEST"
   : ! + b a
 
-! println ! testAssignment "Real test"
+println ! testAssignment "Real test"

@@ -80,7 +80,7 @@ static const struct _lair_type **_get_function_args(
 		 * as arguments.
 		 */
 		const struct _lair_type **args = calloc(1, sizeof(struct _lair_type *));
-		args[0] =_lair_env_eval(r, ast_node->next, env);
+		args[0] = _lair_env_eval(r, ast_node->next, env);
 		return args;
 	}
 
@@ -378,8 +378,18 @@ int _lair_eval(struct _lair_runtime *r, const struct _lair_ast *root) {
 		} else if (cur_ast_node->atom.type == LR_FUNCTION) {
 			const char *func_name = cur_ast_node->atom.value.str;
 			const size_t func_name_len = strlen(func_name);
-			_tst_map_insert(&(std_env->functions), func_name, func_name_len,
-					cur_ast_node, sizeof(struct _lair_ast));
+
+			if (!_tst_map_get(std_env->functions, func_name, func_name_len) &&
+					!_tst_map_get(std_env->c_functions, func_name, func_name_len)) {
+				_tst_map_insert(&std_env->functions,
+						func_name,
+						func_name_len,
+						cur_ast_node,
+						sizeof(struct _lair_ast));
+			} else {
+				/* Call the function instead of defining it. */
+				_lair_env_eval(r, cur_ast_node, std_env);
+			}
 		}
 
 		cur_ast_node = cur_ast_node->sibling;

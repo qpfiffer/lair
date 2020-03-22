@@ -10,10 +10,10 @@ complexBranching a b
     : "a equals b, but neither are 1."
   : "Consequences will never be the same."
 
-! println ! isEqual 4 4
-! println ! isEqual 4 3
-! println ! complexBranching 1 1
-! println ! complexBranching 2 1
-! println ! complexBranching 2 2
-! println ! brokenNoTrue 4 4
-! println ! isEqual 4 "a"
+println ! isEqual 4 4
+println ! isEqual 4 3
+println ! complexBranching 1 1
+println ! complexBranching 2 1
+println ! complexBranching 2 2
+println ! brokenNoTrue 4 4
+println ! isEqual 4 "a"

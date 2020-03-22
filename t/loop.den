@@ -5,4 +5,4 @@ loop value
     : value
   loop ! + value 1
 
-! loop 0
+loop 0

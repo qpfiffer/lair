@@ -10,4 +10,4 @@ c x
 d
     : "This is the real test."
 
-! print ! a d
+print ! a d

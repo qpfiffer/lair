@@ -79,6 +79,10 @@ int test_string_append() {
 	return _run_program("t/string_append.den");
 }
 
+int test_string_range() {
+	return _run_program("t/string_range.den");
+}
+
 int test_thingIThoughtOfThisMorning() {
 	return _run_program("t/thingIThoughtOfThisMorning.den");
 }
@@ -105,6 +109,7 @@ int main(int argc, char *argv[]) {
 	run_test(test_shadow);
 	run_test(test_minus);
 	run_test(test_string_append);
+	run_test(test_string_range);
 	run_test(test_thingIThoughtOfThisMorning);
 
 	printf("Tests passed: (%i/%i).\n", tests_run, tests_run + tests_failed);

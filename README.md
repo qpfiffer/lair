@@ -10,6 +10,8 @@
 - [x] Functions-as-arguments
 - [x] If statements ('?')
 - [x] Loops (In the form of recursion?)
+- [x] Throwable Exceptions
+- [ ] Catchable Exceptions
 - [ ] Arrays/Dictionaries
 - [ ] Nested Functions
 

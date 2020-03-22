@@ -310,7 +310,10 @@ static inline const struct _lair_ast *_call_and_continue(
 }
 
 /* Inline to avoid another stack frame. */
-inline const struct _lair_type *_lair_env_eval(struct _lair_runtime *r, const struct _lair_ast *ast, struct _lair_env *env) {
+inline const struct _lair_type *_lair_env_eval(
+		struct _lair_runtime *r,
+		const struct _lair_ast *ast,
+		struct _lair_env *env) {
 	/* We have a goto here to avoid creating a new stack frame, when we really just
 	 * want to call this function again.
 	 */
@@ -388,7 +391,7 @@ int _lair_eval(struct _lair_runtime *r, const struct _lair_ast *root) {
 						sizeof(struct _lair_ast));
 			} else {
 				/* Call the function instead of defining it. */
-				_lair_env_eval(r, cur_ast_node, std_env);
+				_lair_call_function(r, cur_ast_node, std_env);
 			}
 		}
 

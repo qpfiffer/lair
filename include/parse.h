@@ -107,6 +107,9 @@ void _lair_free_tokens(struct _lair_token *tokens);
 
 /**
  * Takes a list of tokens and turns it into an AST.
+ * @param[in]	r	The current lair runtime.
  * @param[in]	tokens	The list of tokens to manipulate.
  */
-struct _lair_ast *_lair_parse_from_tokens(struct _lair_token **tokens);
+struct _lair_ast *_lair_parse_from_tokens(
+		struct _lair_runtime *r,
+		struct _lair_token **tokens);

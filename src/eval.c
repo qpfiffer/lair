@@ -49,9 +49,9 @@ int _lair_add_builtin_function(
 		const char *name,
 		const int argc,
 		const struct _lair_type *(*func_ptr)(LAIR_FUNCTION_SIG)) {
-	check_int(r, name != NULL, ERR_RUNTIME, "Function name cannot be NULL.");
-	check_int(r, env != NULL, ERR_RUNTIME, "Environment cannot be NULL.");
-	check_int(r, strlen(name) > 0, ERR_RUNTIME, "Function name must be more than 0 chars.");
+	check(r, name != NULL, ERR_RUNTIME, "Function name cannot be NULL.");
+	check(r, env != NULL, ERR_RUNTIME, "Environment cannot be NULL.");
+	check(r, strlen(name) > 0, ERR_RUNTIME, "Function name must be more than 0 chars.");
 
 	/* Check to see if that function already exists: */
 	const struct _lair_function *existing_func = _tst_map_get(env->c_functions, name, strlen(name));
@@ -75,12 +75,12 @@ static const struct _lair_type **_get_function_args(
 	if (argc == 0)
 		return NULL;
 	if (ast_node->next->atom.type == LR_CALL) {
-		&check(r, argc == 1, ERR_RUNTIME, "Function takes more than one argument, but RHS is only one argument.");
+		check(r, argc == 1, ERR_RUNTIME, "Function takes more than one argument, but RHS is only one argument.");
 		/* We need to evaluate the RHS before we can pass it to the function
 		 * as arguments.
 		 */
 		const struct _lair_type **args = calloc(1, sizeof(struct _lair_type *));
-		args[0] =_lair_env_eval(ast_node->next, env);
+		args[0] =_lair_env_eval(r, ast_node->next, env);
 		return args;
 	}
 
@@ -94,7 +94,7 @@ static const struct _lair_type **_get_function_args(
 	 */
 	for (;i < argc; i++) {
 		check(r, cur_node != NULL, ERR_RUNTIME, "Not enough arguments to function.");
-		args[i] = _lair_env_eval(cur_node, env);
+		args[i] = _lair_env_eval(r, cur_node, env);
 		cur_node = cur_node->next;
 	}
 	return args;
@@ -103,7 +103,7 @@ static const struct _lair_type **_get_function_args(
 static const struct _lair_type *_lair_call_builtin(struct _lair_runtime *r, const struct _lair_ast *ast_node, struct _lair_env *env, const struct _lair_function *builtin_function) {
 	int argc = builtin_function->argc;
 	const struct _lair_type **argv = _get_function_args(r, argc, ast_node, env);
-	return builtin_function->function_ptr(builtin_function->argc, argv);
+	return builtin_function->function_ptr(r, builtin_function->argc, argv);
 }
 
 struct _lair_env *_lair_env_with_parent(struct _lair_env *parent) {
@@ -128,7 +128,7 @@ static int _lair_add_simple_function(struct _lair_env *env, const char *name, co
 	return _tst_map_insert(&(env->not_variables), name, strlen(name), &val, sizeof(struct _lair_ast));
 }
 
-static const struct _lair_type *_lair_call_runtime_function(const struct _lair_ast *top_level_ast, const struct _lair_ast *defined_function_ast, struct _lair_env *env) {
+static const struct _lair_type *_lair_call_runtime_function(struct _lair_runtime *r, const struct _lair_ast *top_level_ast, const struct _lair_ast *defined_function_ast, struct _lair_env *env) {
 	/* Figure out how many arguments are require for this function. */
 	int argc = 0;
 	struct _lair_ast *_first_function_arg = ((struct _lair_ast *)defined_function_ast)->next;
@@ -139,7 +139,7 @@ static const struct _lair_type *_lair_call_runtime_function(const struct _lair_a
 	}
 
 	if (argc > 0) {
-		const struct _lair_type **args = _get_function_args(argc, top_level_ast, env);
+		const struct _lair_type **args = _get_function_args(r, argc, top_level_ast, env);
 		check(r, args != NULL, ERR_RUNTIME, "No arguments.");
 
 		/* So heres how this works. What we do is create a new `struct _lair_env` object
@@ -158,11 +158,11 @@ static const struct _lair_type *_lair_call_runtime_function(const struct _lair_a
 			_lair_add_simple_function(scoped_env, function_parameter->atom.value.str, args[i]);
 			function_parameter = function_parameter->next;
 		}
-		const struct _lair_type *to_return = _lair_env_eval(_func_eval_ast, scoped_env);
+		const struct _lair_type *to_return = _lair_env_eval(r, _func_eval_ast, scoped_env);
 		_lair_free_env(scoped_env);
 		return to_return;
 	} else {
-		return _lair_env_eval(_func_eval_ast, env);
+		return _lair_env_eval(r, _func_eval_ast, env);
 	}
 }
 
@@ -198,7 +198,7 @@ static const struct _lair_type *_lair_call_function(struct _lair_runtime *r, con
 			/* Don't call it a stack frame. */
 			const struct _lair_ast *last_func = env->current_function;
 			env->current_function = defined_function_ast;
-			const struct _lair_type *value = _lair_call_runtime_function(ast_node, defined_function_ast, env);
+			const struct _lair_type *value = _lair_call_runtime_function(r, ast_node, defined_function_ast, env);
 			env->current_function = last_func;
 			return value;
 		}
@@ -218,7 +218,10 @@ static const struct _lair_type *_lair_call_function(struct _lair_runtime *r, con
 	return throw_exception(r, ERR_RUNTIME, "No such function.");
 }
 
-static const struct _lair_ast *_infer_atom_at_runtime(const struct _lair_ast *ast_node, const struct _lair_env *top_env) {
+static const struct _lair_ast *_infer_atom_at_runtime(
+		struct _lair_runtime *r,
+		const struct _lair_ast *ast_node,
+		const struct _lair_env *top_env) {
 	/* This function attempts to modify an LR_ATOM into something more useful. */
 	check(r, ast_node->atom.type == LR_ATOM, ERR_RUNTIME,
 			"Can't infer an already inferred atom.");
@@ -296,14 +299,17 @@ static inline const struct _lair_ast *_continue(const struct _lair_ast *ast) {
 	return ast;
 }
 
-static inline const struct _lair_ast *_call_and_continue(const struct _lair_ast *ast, struct _lair_env *env) {
-	_lair_call_function(ast, env);
+static inline const struct _lair_ast *_call_and_continue(
+		struct _lair_runtime *r,
+		const struct _lair_ast *ast,
+		struct _lair_env *env) {
+	_lair_call_function(r, ast, env);
 	ast = _continue(ast);
 	return ast;
 }
 
 /* Inline to avoid another stack frame. */
-inline const struct _lair_type *_lair_env_eval(const struct _lair_ast *ast, struct _lair_env *env) {
+inline const struct _lair_type *_lair_env_eval(struct _lair_runtime *r, const struct _lair_ast *ast, struct _lair_env *env) {
 	/* We have a goto here to avoid creating a new stack frame, when we really just
 	 * want to call this function again.
 	 */
@@ -312,19 +318,19 @@ inline const struct _lair_type *_lair_env_eval(const struct _lair_ast *ast, stru
 start_eval:
 	switch (ast->atom.type) {
 		case LR_OPERATOR:
-			return _lair_call_function(ast, env);
+			return _lair_call_function(r, ast, env);
 		case LR_CALL:
-			return _lair_call_function(ast->next, env);
+			return _lair_call_function(r, ast->next, env);
 		case LR_IF:
-			ast = _evalute_if_statement(ast, env);
+			ast = _evalute_if_statement(r, ast, env);
 			goto start_eval;
 		case LR_DEDENT:
 			return throw_exception(r, ERR_RUNTIME, "PANIC DEDENT");
 		case LR_ATOM:
-			possible_new_atom = _infer_atom_at_runtime(ast, env);
+			possible_new_atom = _infer_atom_at_runtime(r, ast, env);
 			if (ast->next != NULL && ast->next->atom.type == LR_RETURN) {
 				/* Evaluate the RHS, get the value. */
-				const struct _lair_type *ret_val = _lair_env_eval(ast->next, env);
+				const struct _lair_type *ret_val = _lair_env_eval(r, ast->next, env);
 				/* Now stick that value as a simple function under the name of
 				 * whatever the AST's atom is.
 				 */
@@ -335,7 +341,7 @@ start_eval:
 				goto start_eval;
 			} else if (ast->prev != NULL && ast->prev->atom.type == LR_INDENT &&
 					_is_callable(ast)) {
-				ast = _call_and_continue(ast, env);
+				ast = _call_and_continue(r, ast, env);
 				if (ast == NULL)
 					return &possible_new_atom->atom;
 				goto start_eval;
@@ -351,7 +357,7 @@ start_eval:
 			goto start_eval;
 		case LR_RETURN:
 			env->currently_returning = 1;
-			return _lair_env_eval(ast->next, env);
+			return _lair_env_eval(r, ast->next, env);
 		default:
 			return &ast->atom;
 	}
@@ -360,13 +366,13 @@ start_eval:
 	return NULL;
 }
 
-int _lair_eval(const struct _lair_ast *root) {
-	struct _lair_env *std_env = _lair_standard_env();
+int _lair_eval(struct _lair_runtime *r, const struct _lair_ast *root) {
+	struct _lair_env *std_env = _lair_standard_env(r);
 	const struct _lair_ast *cur_ast_node = root->children;
 
 	while (cur_ast_node != NULL) {
 		if (cur_ast_node->atom.type == LR_CALL) {
-			_lair_env_eval(cur_ast_node, std_env);
+			_lair_env_eval(r, cur_ast_node, std_env);
 		} else if (cur_ast_node->atom.type == LR_FUNCTION) {
 			const char *func_name = cur_ast_node->atom.value.str;
 			const size_t func_name_len = strlen(func_name);

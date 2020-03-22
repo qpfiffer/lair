@@ -23,13 +23,13 @@ int main(int argc, char *argv[]) {
 
 	buf = lair_load_file(file_path, &buf_siz);
 	if (buf == NULL) {
-		throw_exception(ERR_RUNTIME, "Could not load file.");
+		error_and_die(ERR_RUNTIME, "Could not load file.");
 		return 1;
 	}
 
 	int rc = lair_execute(buf, buf_siz);
 	if (rc != 0) {
-		throw_exception(ERR_RUNTIME, "Could not execute.");
+		error_and_die(ERR_RUNTIME, "Could not execute.");
 		return 1;
 	}
 

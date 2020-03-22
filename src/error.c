@@ -16,7 +16,7 @@ static inline const char *_friendly_err(const ERROR_TYPE err) {
 	}
 }
 
-const struct _lair_type *_check(
+const struct _lair_type *check(
 		struct _lair_runtime *r,
 		const int cond,
 		const ERROR_TYPE err_type, const char *msg) {
@@ -39,6 +39,8 @@ const struct _lair_type *throw_exception(
 	strncpy(new_type->value.str, buf, len);
 
 	r->exception = new_type;
+
+	longjmp(r->exception_buffer, 0);
 	return new_type;
 }
 

@@ -1,5 +1,7 @@
 // vim: noet ts=4 sw=4
 #pragma once
+#include "lair.h"
+
 #define LAIR_FUNCTION_SIG struct _lair_runtime *r, const int argc, const struct _lair_type *argv[]
 #define ADD_TO_STD_ENV(RUNTIME, FUNC_NAME, ARGS, PTR) rc = _lair_add_builtin_function(RUNTIME, std_env, FUNC_NAME, ARGS, PTR);\
 	if (rc != 0) { error_and_die(ERR_RUNTIME, "Could not build standard env."); }
@@ -36,9 +38,10 @@ struct _lair_function {
 
 /**
  * Runs a lair AST. (Is that right? Am I fooling anyone?)
+ * @param[in]	r		The current Lair runtime.
  * @param[in]	root	The root node of the AST.
  */
-int _lair_eval(const struct _lair_ast *root);
+int _lair_eval(struct _lair_runtime *r, const struct _lair_ast *root);
 
 /**
  * Generates and returns a map with the standard lib in it.
@@ -69,10 +72,14 @@ int _lair_add_builtin_function(
 
 /**
  * Evaluates an ast node inside of the passed environment.
+ * @param[in]	r	The current Lair runtime.
  * @param[in]	ast	The AST node to evaluate.
  * @param[in]	env	The environment to operate under.
  */
-const struct _lair_type *_lair_env_eval(const struct _lair_ast *ast, struct _lair_env *env);
+const struct _lair_type *_lair_env_eval(
+		struct _lair_runtime *r,
+		const struct _lair_ast *ast,
+		struct _lair_env *env);
 
 /**
  * Returns the one and only 'true' lair value.

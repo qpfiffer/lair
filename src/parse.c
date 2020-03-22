@@ -162,7 +162,10 @@ static int _function_args_shadow_function(const struct _lair_token *new_token) {
 	return 0;
 }
 
-static void _intuit_token_type(struct _lair_token *new_token, const char *stripped) {
+static void _intuit_token_type(
+		struct _lair_runtime *r,
+		struct _lair_token *new_token,
+		const char *stripped) {
 	const size_t stripped_len = strlen(stripped);
 	if (stripped_len == 1) {
 		if (stripped[0] == ':')
@@ -182,7 +185,7 @@ static void _intuit_token_type(struct _lair_token *new_token, const char *stripp
 	} else {
 		if (stripped[0] == '"') {
 			if (!_is_valid_string(stripped, stripped_len))
-				throw_exception(ERR_SYNTAX, "String has no ending \".");
+				throw_exception(r, ERR_SYNTAX, "String has no ending \".");
 			else
 				new_token->token_type = LR_STRING;
 		} else if (_is_all_numbers(stripped))
@@ -192,10 +195,10 @@ static void _intuit_token_type(struct _lair_token *new_token, const char *stripp
 	}
 }
 
-struct _lair_token *_lair_tokenize(struct _lair_runtime *runtime, const char *program, const size_t len) {
-	(void)runtime;
+struct _lair_token *_lair_tokenize(struct _lair_runtime *r, const char *program, const size_t len) {
 	struct _lair_token *tokens = NULL;
 	size_t num_read = 0;
+
 	while (num_read < len) {
 		const struct _str line = read_line(program + num_read);
 		num_read += line.size;
@@ -257,10 +260,10 @@ struct _lair_token *_lair_tokenize(struct _lair_runtime *runtime, const char *pr
 					case LR_FUNCTION_ARG:
 						new_token->token_type = LR_FUNCTION_ARG;
 						if (_function_args_shadow_function(new_token))
-							throw_exception(ERR_PARSE, "Function argument names shadow function name.");
+							throw_exception(r, ERR_PARSE, "Function argument names shadow function name.");
 						break;
 					case LR_INDENT:
-						_intuit_token_type(new_token, stripped);
+						_intuit_token_type(r, new_token, stripped);
 						break;
 					case LR_DEDENT:
 						CALL_OR_FUNCTION
@@ -292,19 +295,20 @@ struct _lair_token *_lair_tokenize(struct _lair_runtime *runtime, const char *pr
 								}
 							}
 
-							if (!found_end)
-								throw_exception(ERR_SYNTAX, "String has no ending \".");
+							if (!found_end) {
+								throw_exception(r, ERR_SYNTAX, "String has no ending \".");
+							}
 
 							free(new_token->token_str);
 							new_token->token_str = calloc(1, new_len + 1);
 							memcpy(new_token->token_str, remaining, new_len);
 
-							_intuit_token_type(new_token, remaining);
+							_intuit_token_type(r, new_token, remaining);
 
 							extra_modified = 1;
 							token = strtok((char *)line.data + start + strlen(remaining), " ");
 						} else {
-							_intuit_token_type(new_token, stripped);
+							_intuit_token_type(r, new_token, stripped);
 						}
 				}
 			} else {
@@ -483,8 +487,10 @@ static struct _lair_ast *_parse_from_token(struct _lair_token **tokens) {
 	return NULL;
 }
 
-struct _lair_ast *_lair_parse_from_tokens(struct _lair_token **tokens) {
-	check(tokens != NULL, ERR_PARSE, "No tokens to parse.");
+struct _lair_ast *_lair_parse_from_tokens(
+		struct _lair_runtime *r,
+		struct _lair_token **tokens) {
+	check(r, tokens != NULL, ERR_PARSE, "No tokens to parse.");
 	struct _lair_ast *ast_root = calloc(1, sizeof(struct _lair_ast));
 	struct _lair_ast *child_loc = ast_root->children;
 
@@ -505,6 +511,6 @@ struct _lair_ast *_lair_parse_from_tokens(struct _lair_token **tokens) {
 	}
 
 	/* The root node should never have any siblings. */
-	check(ast_root->next == NULL, ERR_PARSE, "The tree got messed up somehow.");
+	check(r, ast_root->next == NULL, ERR_PARSE, "The tree got messed up somehow.");
 	return ast_root;
 }

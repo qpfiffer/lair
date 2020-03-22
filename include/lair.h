@@ -1,5 +1,8 @@
 // vim: noet ts=4 sw=4
 #pragma once
+
+#include <setjmp.h>
+
 /** @file
  * @brief Main functions intended for outside usage.
  */
@@ -30,4 +33,5 @@ void lair_unload_file(char *loaded, size_t buf_size);
  */
 struct _lair_runtime {
 	struct _lair_type *exception;
+	jmp_buf exception_buffer;
 };

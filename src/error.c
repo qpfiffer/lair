@@ -40,7 +40,7 @@ const struct _lair_type *throw_exception(
 
 	r->exception = new_type;
 
-	longjmp(r->exception_buffer, 0);
+	longjmp(r->exception_buffer, 1);
 	return new_type;
 }
 

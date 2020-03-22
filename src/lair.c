@@ -40,7 +40,7 @@ char *lair_load_file(const char *file_path, size_t *buf_size) {
 
 int lair_execute(const char *program, const size_t len) {
 	struct _lair_runtime *runtime = _lair_runtime_start();
-	if (!setjmp(runtime->exception_buffer)) {
+	if (setjmp(runtime->exception_buffer)) {
 		if (runtime->exception) {
 			/* TODO: Print exception here. */
 		}

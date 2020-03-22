@@ -2,7 +2,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+
 #include "error.h"
+#include "lair.h"
 #include "parse.h"
 
 static inline const char *_friendly_err(const ERROR_TYPE err) {
@@ -14,12 +16,19 @@ static inline const char *_friendly_err(const ERROR_TYPE err) {
 	}
 }
 
-inline void check(const int cond, const ERROR_TYPE err_type, const char *msg) {
+const struct _lair_type *_check(
+		struct _lair_runtime *r,
+		const int cond,
+		const ERROR_TYPE err_type, const char *msg) {
 	if (!cond)
-		throw_exception(err_type, msg);
+		return throw_exception(r, err_type, msg);
+	return NULL;
 }
 
-const struct _lair_type *throw_exception(const ERROR_TYPE err_type, const char *msg) {
+const struct _lair_type *throw_exception(
+		struct _lair_runtime *r,
+		const ERROR_TYPE err_type,
+		const char *msg) {
 	const char *friendly_err = _friendly_err(err_type);
 	struct _lair_type *new_type = calloc(1, sizeof(struct _lair_type));
 	new_type->type = LR_ERR;
@@ -29,15 +38,8 @@ const struct _lair_type *throw_exception(const ERROR_TYPE err_type, const char *
 	new_type->value.str = calloc(1, len);
 	strncpy(new_type->value.str, buf, len);
 
+	r->exception = new_type;
 	return new_type;
-
-	/*
-	snprintf(buf, sizeof(buf), "%c[%dm%s%c[%dm", 0x1B, 31, friendly_err, 0x1B, 0x0);
-	snprintf(buf + strlen(buf), sizeof(buf), ": %s\n", msg);
-	printf("%s", buf);
-
-	exit(1);
-	*/
 }
 
 void error_and_die(const ERROR_TYPE err_type, const char *msg) {

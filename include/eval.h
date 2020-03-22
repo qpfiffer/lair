@@ -1,8 +1,8 @@
 // vim: noet ts=4 sw=4
 #pragma once
-#define LAIR_FUNCTION_SIG const int argc, const struct _lair_type *argv[]
-#define ADD_TO_STD_ENV(FUNC_NAME, ARGS, PTR) rc = _lair_add_builtin_function(std_env, FUNC_NAME, ARGS, PTR);\
-	check(rc == 0, ERR_RUNTIME, "Could not build standard env.");
+#define LAIR_FUNCTION_SIG struct _lair_runtime *r, const int argc, const struct _lair_type *argv[]
+#define ADD_TO_STD_ENV(RUNTIME, FUNC_NAME, ARGS, PTR) rc = _lair_add_builtin_function(RUNTIME, std_env, FUNC_NAME, ARGS, PTR);\
+	if (rc != 0) { error_and_die(ERR_RUNTIME, "Could not build standard env."); }
 /**
  * @file
  * Where the magic happens.
@@ -54,12 +54,15 @@ struct _lair_env *_lair_env_with_parent(struct _lair_env *parent);
 /**
  * Adds a function to an environment.
  * Returns 0 on success.
+ * @param[in]	r		The current Lair runtime.
  * @param[in]	env		The environment to add the function to.
  * @param[in]	name	The name/symbol of the function.
  * @param[in]	argc	The argument require count for the function to be added.
  * @param[in]	func_ptr	The function to evaluate.
  */
-int _lair_add_builtin_function(struct _lair_env *env,
+int _lair_add_builtin_function(
+		struct _lair_runtime *r,
+		struct _lair_env *env,
 		const char *name,
 		const int argc,
 		const struct _lair_type *(*func_ptr)(LAIR_FUNCTION_SIG));

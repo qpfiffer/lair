@@ -7,6 +7,7 @@
 #include <unistd.h>
 
 #include "eval.h"
+#include "error.h"
 #include "lair.h"
 #include "parse.h"
 
@@ -41,8 +42,8 @@ char *lair_load_file(const char *file_path, size_t *buf_size) {
 int lair_execute(const char *program, const size_t len) {
 	struct _lair_runtime *runtime = _lair_runtime_start();
 	if (setjmp(runtime->exception_buffer)) {
-		if (runtime->exception) {
-			/* TODO: Print exception here. */
+		if (runtime->exception_msg) {
+			print_error(runtime->exception_type, runtime->exception_msg);
 		}
 		goto error;
 	}

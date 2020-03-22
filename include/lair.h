@@ -3,6 +3,8 @@
 
 #include <setjmp.h>
 
+#include "error.h"
+
 /** @file
  * @brief Main functions intended for outside usage.
  */
@@ -32,6 +34,7 @@ void lair_unload_file(char *loaded, size_t buf_size);
  * Lair runtime, holds various state and error constructs.
  */
 struct _lair_runtime {
-	struct _lair_type *exception;
+	ERROR_TYPE exception_type;
+	char *exception_msg;
 	jmp_buf exception_buffer;
 };

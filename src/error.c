@@ -16,41 +16,34 @@ static inline const char *_friendly_err(const ERROR_TYPE err) {
 	}
 }
 
-const struct _lair_type *check(
+void check(
 		struct _lair_runtime *r,
 		const int cond,
 		const ERROR_TYPE err_type, const char *msg) {
 	if (!cond)
-		return throw_exception(r, err_type, msg);
-	return NULL;
+		throw_exception(r, err_type, msg);
 }
 
-const struct _lair_type *throw_exception(
+void throw_exception(
 		struct _lair_runtime *r,
 		const ERROR_TYPE err_type,
 		const char *msg) {
-	const char *friendly_err = _friendly_err(err_type);
-	struct _lair_type *new_type = calloc(1, sizeof(struct _lair_type));
-	new_type->type = LR_ERR;
-
-	char buf[256] = {0};
-	const size_t len = snprintf(buf, sizeof(buf), "%s: %s", friendly_err, msg);
-	new_type->value.str = calloc(1, len);
-	strncpy(new_type->value.str, buf, len);
-
-	r->exception = new_type;
+	r->exception_type = err_type;
+	r->exception_msg = strdup(msg);
 
 	longjmp(r->exception_buffer, 1);
-	return new_type;
 }
 
 void error_and_die(const ERROR_TYPE err_type, const char *msg) {
+	print_error(err_type, msg);
+	exit(1);
+}
+
+void print_error(const ERROR_TYPE err_type, const char *msg) {
 	const char *friendly_err = _friendly_err(err_type);
 	char buf[256] = {0};
 
 	snprintf(buf, sizeof(buf), "%c[%dm%s%c[%dm", 0x1B, 31, friendly_err, 0x1B, 0x0);
 	snprintf(buf + strlen(buf), sizeof(buf), ": %s\n", msg);
 	printf("%s", buf);
-
-	exit(1);
 }

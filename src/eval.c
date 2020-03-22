@@ -215,7 +215,8 @@ static const struct _lair_type *_lair_call_function(struct _lair_runtime *r, con
 		cur_env = (struct _lair_env *)cur_env->parent;
 	}
 
-	return throw_exception(r, ERR_RUNTIME, "No such function.");
+	throw_exception(r, ERR_RUNTIME, "No such function.");
+	return NULL;
 }
 
 static const struct _lair_ast *_infer_atom_at_runtime(
@@ -325,7 +326,8 @@ start_eval:
 			ast = _evalute_if_statement(r, ast, env);
 			goto start_eval;
 		case LR_DEDENT:
-			return throw_exception(r, ERR_RUNTIME, "PANIC DEDENT");
+			throw_exception(r, ERR_RUNTIME, "PANIC DEDENT");
+			return NULL;
 		case LR_ATOM:
 			possible_new_atom = _infer_atom_at_runtime(r, ast, env);
 			if (ast->next != NULL && ast->next->atom.type == LR_RETURN) {

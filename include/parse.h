@@ -14,6 +14,8 @@ struct _lair_runtime;
 typedef enum {
 	LR_ERR, /**	Unknown type. Should not happen. */
 	LR_FUNCTION, /**	Function. */
+	LR_FUNCTION_CALL, /**	Function call, slightly different than function.
+							Usually means a function BEING called. */
 	LR_OPERATOR, /**	An operator (+, -, ?, etc.). */
 	LR_RETURN, /**	The return built-in function. */
 	LR_FUNCTION_ARG, /**	A parameter to a function. */
@@ -113,3 +115,20 @@ void _lair_free_tokens(struct _lair_token *tokens);
 struct _lair_ast *_lair_parse_from_tokens(
 		struct _lair_runtime *r,
 		struct _lair_token **tokens);
+
+/**
+ * Figures out what a token is based on what it looks like.
+ * @param[in]	r	The current lair runtime.
+ * @param[in]	new_token	The token to work on.
+ * @param[in]	stripped	The raw C string representing the token.
+ */
+void _intuit_token_type(
+		struct _lair_runtime *r,
+		struct _lair_token *new_token,
+		const char *stripped);
+
+/**
+ * Fills out remaining token information.
+ * @param[in]	token	The token to analyze.
+ */
+struct _lair_type _lair_atomize_token(const struct _lair_token *token);

@@ -30,6 +30,26 @@ inline const struct _lair_type *_lair_canonical_true() {
 	return &_lair_true;
 }
 
+static inline int _is_callable(const struct _lair_ast *n) {
+	const LAIR_TOKEN t = n->atom.type;
+	if (t == LR_FUNCTION || t == LR_ATOM || t == LR_OPERATOR || t == LR_IF || t == LR_FUNCTION_CALL)
+		return 1;
+	return 0;
+}
+
+static inline int _is_callable_runtime(const struct _lair_env *env, const struct _lair_ast *n) {
+	const char *func_name = n->atom.value.str;
+	const size_t func_name_len = strlen(func_name);
+
+	const void *is_std_func = _tst_map_get(
+			env->functions, func_name, func_name_len);
+	const void *is_c_func = _tst_map_get(
+			env->c_functions, func_name, func_name_len);
+
+	return _is_callable(n) || is_std_func != NULL || is_c_func != NULL;
+}
+
+
 struct _lair_env *_lair_standard_env(struct _lair_runtime *r) {
 	struct _lair_env *std_env = calloc(1, sizeof(struct _lair_env));
 
@@ -37,6 +57,7 @@ struct _lair_env *_lair_standard_env(struct _lair_runtime *r) {
 	ADD_TO_STD_ENV(r, "print", 1, &_lair_builtin_print);
 	ADD_TO_STD_ENV(r, "println", 1, &_lair_builtin_println);
 	ADD_TO_STD_ENV(r, "+", 2, &_lair_builtin_operator_plus);
+	ADD_TO_STD_ENV(r, "-", 2, &_lair_builtin_operator_minus);
 	ADD_TO_STD_ENV(r, "=", 2, &_lair_builtin_operator_eq);
 	ADD_TO_STD_ENV(r, "str", 2, &_lair_builtin_str);
 
@@ -67,6 +88,56 @@ int _lair_add_builtin_function(
 	return _tst_map_insert(&(env->c_functions), name, strlen(name), &_stack_func, sizeof(struct _lair_function));
 }
 
+static void _reevaluate_until_break(struct _lair_runtime *r,
+		struct _lair_env *env,
+		struct _lair_ast *current_node) {
+	/* This function will take an AST node and re-evaluate it in it's new context.
+	 * We don't know until runtime if we're calling or defining a function,
+	 * so the idea here is to turn LR_FUNCTION_ARG nodes into things that
+	 * they actually are.
+	 */
+	struct _lair_ast *n = current_node;
+	while (n &&
+			n->atom.type != LR_DEDENT &&
+			n->atom.type != LR_EOF) {
+		struct _lair_ast *prev = n->prev;
+		struct _lair_ast *next = n->next;
+		if (n->next && n->next->prev == NULL) {
+			n->next->prev = n;
+		}
+
+		if (prev && (prev->atom.type == LR_CALL || prev->atom.type == LR_INDENT)) {
+			if (_is_callable_runtime(env, n)) {
+				n->atom.type = LR_FUNCTION_CALL;
+			}
+		} else if (prev && prev->atom.type == LR_FUNCTION_CALL) {
+			/* We need to parse this into something more useful, like a string or a number. */
+			struct _lair_token token = {
+				.token_str = n->atom.value.str,
+				.token_type = LR_ERR,
+				.indent_level = n->indent_level,
+				.next = NULL,
+				.prev = NULL,
+			};
+			_intuit_token_type(r, &token, n->atom.value.str);
+			n->atom = _lair_atomize_token(&token);
+		} else if (prev && (prev->atom.type == LR_FUNCTION_ARG || prev->atom.type == LR_FUNCTION)) {
+			n->atom.type = LR_FUNCTION_ARG;
+		} else {
+			struct _lair_token token = {
+				.token_str = n->atom.value.str,
+				.token_type = LR_ERR,
+				.indent_level = n->indent_level,
+				.next = NULL,
+				.prev = NULL,
+			};
+			_intuit_token_type(r, &token, n->atom.value.str);
+			n->atom = _lair_atomize_token(&token);
+		}
+
+		n = next;
+	}
+}
 static const struct _lair_type **_get_function_args(
 		struct _lair_runtime *r,
 		const int argc,
@@ -74,7 +145,21 @@ static const struct _lair_type **_get_function_args(
 		struct _lair_env *env) {
 	if (argc == 0)
 		return NULL;
-	if (ast_node->next->atom.type == LR_CALL) {
+
+	const struct _lair_ast *next_node = ast_node->next;
+	if (next_node->atom.type == LR_FUNCTION_ARG &&
+			strncmp(next_node->atom.value.str, "!", 1) == 0) {
+		/* I guess we're building a JIT now. */
+		/* Evalue at the RHS: */
+		ast_node->next->atom.type = LR_CALL;
+
+		/* This one is a function, the next one is a call, so we evaluate the
+		 * one after that:
+		 */
+		_reevaluate_until_break(r, env, ast_node->next->next);
+	}
+
+	if (next_node->atom.type == LR_CALL) {
 		check(r, argc == 1, ERR_RUNTIME, "Function takes more than one argument, but RHS is only one argument.");
 		/* We need to evaluate the RHS before we can pass it to the function
 		 * as arguments.
@@ -164,13 +249,6 @@ static const struct _lair_type *_lair_call_runtime_function(struct _lair_runtime
 	} else {
 		return _lair_env_eval(r, _func_eval_ast, env);
 	}
-}
-
-static int _is_callable(const struct _lair_ast *n) {
-	const LAIR_TOKEN t = n->atom.type;
-	if (t == LR_FUNCTION || t == LR_ATOM || t == LR_OPERATOR || t == LR_IF)
-		return 1;
-	return 0;
 }
 
 static const struct _lair_type *_lair_call_function(struct _lair_runtime *r, const struct _lair_ast *ast_node, struct _lair_env *env) {
@@ -382,8 +460,12 @@ int _lair_eval(struct _lair_runtime *r, const struct _lair_ast *root) {
 			const char *func_name = cur_ast_node->atom.value.str;
 			const size_t func_name_len = strlen(func_name);
 
-			if (!_tst_map_get(std_env->functions, func_name, func_name_len) &&
-					!_tst_map_get(std_env->c_functions, func_name, func_name_len)) {
+			const void *is_std_func = _tst_map_get(
+					std_env->functions, func_name, func_name_len);
+			const void *is_c_func = _tst_map_get(
+					std_env->c_functions, func_name, func_name_len);
+			if (!is_std_func && !is_c_func) {
+				/* We're defining a function so insert it. */
 				_tst_map_insert(&std_env->functions,
 						func_name,
 						func_name_len,

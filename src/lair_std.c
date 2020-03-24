@@ -55,6 +55,35 @@ const struct _lair_type *_lair_builtin_operator_plus(LAIR_FUNCTION_SIG) {
 	return NULL;
 }
 
+const struct _lair_type *_lair_builtin_operator_minus(LAIR_FUNCTION_SIG) {
+	check(r, argc == 2, ERR_RUNTIME, "Incorrect number of arguments to `-` function.");
+	check(r, argv[0] != NULL, ERR_RUNTIME, "Argument to `-` function was NULL.");
+	check(r, argv[1] != NULL, ERR_RUNTIME, "Argument to `-` function was NULL.");
+	check(r, argv[0]->type == argv[1]->type, ERR_RUNTIME, "Cannot add variables of different types together.");
+	check(r, argv[0]->type != LR_STRING, ERR_RUNTIME, "Cannot subtract strings");
+	check(r, argv[1]->type != LR_STRING, ERR_RUNTIME, "Cannot subtract strings");
+
+	/* We already know (probably) that the types are the same. */
+	const LAIR_TOKEN first_arg_type = argv[0]->type;
+	switch (first_arg_type) {
+		/* Integer addition. */
+		case LR_NUM: {
+			struct _lair_type _stack = {
+				.type = LR_NUM,
+				.value = {
+					.num = argv[0]->value.num - argv[1]->value.num
+				}
+			};
+			struct _lair_type *to_return = calloc(1, sizeof(struct _lair_type));
+			memcpy(to_return, &_stack, sizeof(struct _lair_type));
+			return to_return;
+		}
+		default:
+			throw_exception(r, ERR_RUNTIME, "Don't know how to subtract these things.");
+	}
+	return NULL;
+}
+
 const struct _lair_type *_lair_builtin_operator_eq(LAIR_FUNCTION_SIG) {
 	check(r, argc == 2, ERR_RUNTIME, "Incorrect number of arguments to `=` function.");
 	check(r, argv[0] != NULL, ERR_RUNTIME, "Argument to `=` function was NULL.");

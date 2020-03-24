@@ -31,6 +31,10 @@ int _run_program(const char *filename) {
 	return 0;
 }
 
+int _expect_failure(const char *filename) {
+	return !_run_program(filename);
+}
+
 int test_assignment() {
 	return _run_program("t/assignment.den");
 }
@@ -68,11 +72,15 @@ int test_plus() {
 }
 
 int test_shadow() {
-	return _run_program("t/shadow.den");
+	return _expect_failure("t/shadow.den");
 }
 
 int test_minus() {
 	return _run_program("t/minus.den");
+}
+
+int test_minus_fail() {
+	return _expect_failure("t/minus_fail.den");
 }
 
 int test_string_append() {
@@ -108,6 +116,7 @@ int main(int argc, char *argv[]) {
 	run_test(test_plus);
 	run_test(test_shadow);
 	run_test(test_minus);
+	run_test(test_minus_fail);
 	run_test(test_string_append);
 	run_test(test_string_range);
 	run_test(test_thingIThoughtOfThisMorning);

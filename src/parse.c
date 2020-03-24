@@ -162,7 +162,7 @@ static int _function_args_shadow_function(const struct _lair_token *new_token) {
 	return 0;
 }
 
-static void _intuit_token_type(
+void _intuit_token_type(
 		struct _lair_runtime *r,
 		struct _lair_token *new_token,
 		const char *stripped) {
@@ -379,7 +379,7 @@ static char *_convert_str_token_to_str(const char *token) {
 	return to_return;
 }
 
-static struct _lair_type _lair_atomize_token(const struct _lair_token *token) {
+struct _lair_type _lair_atomize_token(const struct _lair_token *token) {
 	/* This is where we do parse-time type coersion into things that
 	 * better represent the types we're eventually going to want out
 	 * of whatever it is they are in.

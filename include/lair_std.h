@@ -19,6 +19,13 @@ struct _lair_type;
 const struct _lair_type *_lair_builtin_operator_plus(LAIR_FUNCTION_SIG);
 
 /**
+ * The '-' operator. Subtracts two things, must be of the same type, and
+ * probably not functions. Adding functions together sounds weird. Doesn't
+ * work on strings.
+ */
+const struct _lair_type *_lair_builtin_operator_minus(LAIR_FUNCTION_SIG);
+
+/**
  * The '=' operator. Tries to compare two things together.
  */
 const struct _lair_type *_lair_builtin_operator_eq(LAIR_FUNCTION_SIG);

@@ -1,0 +1,6 @@
+isEqual a b
+  ? = a b
+    : "True!"
+  : "False!"
+
+println ! isEqual 4 "a"

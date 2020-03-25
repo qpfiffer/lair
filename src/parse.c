@@ -9,7 +9,8 @@
 inline char *_friendly_enum(const LAIR_TOKEN val) {
 	switch (val) {
 		case LR_ERR:			return "ERR";
-		case LR_FUNCTION:		return "FUNCTION";
+		case LR_FUNCTION_CALL:	return "FUNCTION_CALL";
+		case LR_FUNCTION_DEF:	return "FUNCTION_DEF";
 		case LR_FUNCTION_ARG:	return "FUNCTION_ARG";
 		case LR_OPERATOR:		return "OP";
 		case LR_RETURN:			return "RETURN";
@@ -33,7 +34,8 @@ void lair_print_tokens(const struct _lair_token *tokens) {
 	while (cur_tok != NULL) {
 		const char *frnd = _friendly_enum(cur_tok->token_type);
 		switch (cur_tok->token_type) {
-			case LR_FUNCTION:
+			case LR_FUNCTION_DEF:
+			case LR_FUNCTION_CALL:
 				printf("%s %s ", frnd, cur_tok->token_str);
 				break;
 			case LR_DEDENT:
@@ -154,11 +156,13 @@ static int _function_args_shadow_function(
 		const struct _lair_token **shadowed) {
 	const struct _lair_token *cur = new_token->prev;
 	while (cur != NULL) {
-		if (cur->token_type != LR_FUNCTION && cur->token_type != LR_FUNCTION_ARG) {
+		if (cur->token_type != LR_FUNCTION_DEF &&
+				cur->token_type != LR_FUNCTION_ARG) {
 			break;
 		}
 
-		const int32_t cmp_result = strcmp(new_token->token_str, cur->token_str);
+		const int32_t cmp_result = strcmp(
+				new_token->token_str, cur->token_str);
 		if (cur->token_str != NULL && cmp_result == 0) {
 			*shadowed = cur;
 			return 1;
@@ -217,10 +221,11 @@ struct _lair_token *_lair_tokenize(struct _lair_runtime *r, const char *program,
 		int indentation_level = token - line.data;
 		while (token != NULL) {
 			/* Is it a comment? Ignore the rest of the line. */
-			if (token[0] == '#')
+			if (token[0] == '#') {
 				break;
-			else if (_is_newline(token))
+			} else if (_is_newline(token)) {
 				break;
+			}
 
 			/* We don't want to insert an indent/dedent on the very first line,
 			* and we only want to do this at the beginning of each line. The beginning
@@ -256,74 +261,80 @@ struct _lair_token *_lair_tokenize(struct _lair_runtime *r, const char *program,
 			/* Actually insert it. */
 			_insert_token(&tokens, new_token);
 
-#define CALL_OR_FUNCTION if (new_token->token_str[0] == '!' && stripped_len == 1)\
+#define CALL_OR_FUNCTION if (new_token->token_str[0] == '!' && stripped_len == 1) {\
 							new_token->token_type = LR_CALL;\
-						else\
-							new_token->token_type = LR_FUNCTION;\
+						} else {\
+							new_token->token_type = LR_FUNCTION_DEF;\
+						}
 
 			int extra_modified = 0;
 			if (new_token->prev != NULL) {
-				switch (new_token->prev->token_type) {
-					case LR_FUNCTION:
-					case LR_FUNCTION_ARG: {
-						const struct _lair_token *out = NULL;
-						new_token->token_type = LR_FUNCTION_ARG;
-						if (_function_args_shadow_function(new_token, &out)) {
-							char buf[512] = {0};
-							const char *msg = "Function argument names shadow function name: %s shadows %s";
-							snprintf(buf, sizeof(buf), msg, new_token->token_str, (*out).token_str);
-							throw_exception(r, ERR_PARSE, buf);
+				if (new_token->token_str[0] == '!' && stripped_len == 1) {
+					new_token->token_type = LR_CALL;
+				} else {
+					switch (new_token->prev->token_type) {
+						case LR_FUNCTION_DEF:
+						case LR_FUNCTION_ARG: {
+							const struct _lair_token *out = NULL;
+							new_token->token_type = LR_FUNCTION_ARG;
+							if (_function_args_shadow_function(new_token, &out)) {
+								char buf[512] = {0};
+								const char *msg = "Function argument names shadow function name: %s shadows %s";
+								snprintf(buf, sizeof(buf), msg, new_token->token_str, (*out).token_str);
+								throw_exception(r, ERR_PARSE, buf);
+							}
+							break;
 						}
-						break;
-					}
-					case LR_INDENT:
-						_intuit_token_type(r, new_token, stripped);
-						break;
-					case LR_DEDENT:
-						CALL_OR_FUNCTION
-						break;
-					default:
-						/* Check to see if we hit a space in the middle of a string. */
-						if (stripped[0] == '"' && stripped[stripped_len - 1] != '"') {
-							// TODO: Rewrite this to support multiline strings. Needs a stateful
-							// variable.
-							// this is a "test of the thing" okay
-							// |--------->    <-----------------|
-							const size_t start = token - line.data;
-							const size_t end = line.size;
-							char remaining[end - start];
-							memset(remaining, '\0', end - start);
-							memcpy(remaining, stripped, stripped_len);
-							remaining[stripped_len] = ' ';
-							size_t i = 0;
-							size_t new_len = stripped_len + 1;
-							int found_end = 0;
-							for(i = stripped_len + start + 1; i < end; i++) {
-								new_len++;
-								remaining[i - start] = line.data[i];
-
-								if (line.data[i] == '"') {
-									remaining[i] = '\0';
-									found_end = 1;
-									break;
-								}
-							}
-
-							if (!found_end) {
-								throw_exception(r, ERR_SYNTAX, "String has no ending \".");
-							}
-
-							free(new_token->token_str);
-							new_token->token_str = calloc(1, new_len + 1);
-							memcpy(new_token->token_str, remaining, new_len);
-
-							_intuit_token_type(r, new_token, remaining);
-
-							extra_modified = 1;
-							token = strtok((char *)line.data + start + strlen(remaining), " ");
-						} else {
+						case LR_INDENT:
 							_intuit_token_type(r, new_token, stripped);
-						}
+							break;
+						case LR_DEDENT:
+							CALL_OR_FUNCTION
+							break;
+						case LR_FUNCTION_CALL:
+						default:
+							/* Check to see if we hit a space in the middle of a string. */
+							if (stripped[0] == '"' && stripped[stripped_len - 1] != '"') {
+								// TODO: Rewrite this to support multiline strings. Needs a stateful
+								// variable.
+								// this is a "test of the thing" okay
+								// |--------->    <-----------------|
+								const size_t start = token - line.data;
+								const size_t end = line.size;
+								char remaining[end - start];
+								memset(remaining, '\0', end - start);
+								memcpy(remaining, stripped, stripped_len);
+								remaining[stripped_len] = ' ';
+								size_t i = 0;
+								size_t new_len = stripped_len + 1;
+								int found_end = 0;
+								for(i = stripped_len + start + 1; i < end; i++) {
+									new_len++;
+									remaining[i - start] = line.data[i];
+
+									if (line.data[i] == '"') {
+										remaining[i] = '\0';
+										found_end = 1;
+										break;
+									}
+								}
+
+								if (!found_end) {
+									throw_exception(r, ERR_SYNTAX, "String has no ending \".");
+								}
+
+								free(new_token->token_str);
+								new_token->token_str = calloc(1, new_len + 1);
+								memcpy(new_token->token_str, remaining, new_len);
+
+								_intuit_token_type(r, new_token, remaining);
+
+								extra_modified = 1;
+								token = strtok((char *)line.data + start + strlen(remaining), " ");
+							} else {
+								_intuit_token_type(r, new_token, stripped);
+							}
+					}
 				}
 			} else {
 				CALL_OR_FUNCTION
@@ -454,8 +465,9 @@ static struct _lair_ast *_parse_from_token(struct _lair_token **tokens) {
 		.indent_level = current_token->indent_level
 	};
 
-	if (current_token->token_type == LR_FUNCTION ||
-		current_token->token_type == LR_CALL) {
+	if (current_token->token_type == LR_FUNCTION_CALL ||
+			current_token->token_type == LR_FUNCTION_DEF ||
+			current_token->token_type == LR_CALL) {
 		struct _lair_ast *list = calloc(1, sizeof(struct _lair_ast));
 		memcpy(list, &_stack_ast, sizeof(struct _lair_ast));
 

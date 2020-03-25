@@ -1,4 +1,4 @@
 a a
     : a
 
-! a "foo"
+println ! a "foo"

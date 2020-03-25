@@ -129,8 +129,9 @@ const struct _lair_type *_lair_builtin_print(LAIR_FUNCTION_SIG) {
 	case LR_NUM:
 		printf("%i", argv[0]->value.num);
 		break;
-	case LR_FUNCTION:
-		printf("<%s: %s>", _friendly_enum(argv[0]->type), argv[0]->value.str);
+	case LR_FUNCTION_DEF:
+	case LR_FUNCTION_CALL:
+		printf("<%s!: %s>", _friendly_enum(argv[0]->type), argv[0]->value.str);
 		break;
 	default:
 		printf("<%s: %p>", _friendly_enum(argv[0]->type), argv[0]);
@@ -181,7 +182,8 @@ const struct _lair_type *_lair_builtin_str(LAIR_FUNCTION_SIG) {
 			memcpy(ptr, buf, siz);
 			new_string->value.str = ptr;
 			break;
-		case LR_FUNCTION:
+		case LR_FUNCTION_DEF:
+		case LR_FUNCTION_CALL:
 			snprintf(buf, sizeof(buf), "<%s: %s>", friendly, argv[0]->value.str);
 
 			siz = strlen(buf);

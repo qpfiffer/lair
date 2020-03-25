@@ -39,6 +39,10 @@ int test_assignment() {
 	return _run_program("t/assignment.den");
 }
 
+int test_assignment_no_function() {
+	return _expect_failure("t/test_assignment.den");
+}
+
 int test_basic() {
 	return _run_program("t/basic.den");
 }
@@ -106,6 +110,7 @@ int main(int argc, char *argv[]) {
 	printf("Running tests.\n");
 
 	run_test(test_assignment);
+	run_test(test_assignment_no_function);
 	run_test(test_basic);
 	run_test(test_equality);
 	run_test(test_functions_all_the_way_down);

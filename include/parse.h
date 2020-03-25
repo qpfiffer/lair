@@ -13,7 +13,7 @@ struct _lair_runtime;
  */
 typedef enum {
 	LR_ERR, /**	Unknown type. Should not happen. */
-	LR_FUNCTION, /**	Function. */
+	LR_FUNCTION_DEF, /**	Function definition. */
 	LR_FUNCTION_CALL, /**	Function call, slightly different than function.
 							Usually means a function BEING called. */
 	LR_OPERATOR, /**	An operator (+, -, ?, etc.). */

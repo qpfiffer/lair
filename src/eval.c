@@ -32,8 +32,18 @@ inline const struct _lair_type *_lair_canonical_true() {
 
 static inline int _is_callable(const struct _lair_ast *n) {
 	const LAIR_TOKEN t = n->atom.type;
-	if (t == LR_FUNCTION || t == LR_ATOM || t == LR_OPERATOR || t == LR_IF || t == LR_FUNCTION_CALL)
-		return 1;
+
+	switch (t) {
+		case LR_ATOM:
+		case LR_IF:
+		case LR_OPERATOR:
+		case LR_FUNCTION_DEF:
+		case LR_FUNCTION_CALL:
+			return 1;
+		default:
+			return 0;
+	}
+
 	return 0;
 }
 
@@ -121,7 +131,7 @@ static void _reevaluate_until_break(struct _lair_runtime *r,
 			};
 			_intuit_token_type(r, &token, n->atom.value.str);
 			n->atom = _lair_atomize_token(&token);
-		} else if (prev && (prev->atom.type == LR_FUNCTION_ARG || prev->atom.type == LR_FUNCTION)) {
+		} else if (prev && (prev->atom.type == LR_FUNCTION_ARG || prev->atom.type == LR_FUNCTION_DEF)) {
 			n->atom.type = LR_FUNCTION_ARG;
 		} else {
 			struct _lair_token token = {
@@ -313,13 +323,13 @@ static const struct _lair_ast *_infer_atom_at_runtime(
 	while (env != NULL) {
 		const struct _lair_function *builtin_function = _tst_map_get(env->c_functions, func_name, func_len);
 		if (builtin_function != NULL) {
-			to_return->atom.type = LR_FUNCTION;
+			to_return->atom.type = LR_FUNCTION_DEF;
 			return to_return;
 		}
 
 		const struct _lair_ast *defined_function_ast = _tst_map_get(env->functions, func_name, func_len);
 		if (defined_function_ast != NULL) {
-			to_return->atom.type = LR_FUNCTION;
+			to_return->atom.type = LR_FUNCTION_DEF;
 			return to_return;
 		}
 
@@ -456,7 +466,7 @@ int _lair_eval(struct _lair_runtime *r, const struct _lair_ast *root) {
 	while (cur_ast_node != NULL) {
 		if (cur_ast_node->atom.type == LR_CALL) {
 			_lair_env_eval(r, cur_ast_node, std_env);
-		} else if (cur_ast_node->atom.type == LR_FUNCTION) {
+		} else if (cur_ast_node->atom.type == LR_FUNCTION_DEF) {
 			const char *func_name = cur_ast_node->atom.value.str;
 			const size_t func_name_len = strlen(func_name);
 

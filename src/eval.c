@@ -263,7 +263,7 @@ static const struct _lair_type *_lair_call_runtime_function(struct _lair_runtime
 
 static const struct _lair_type *_lair_call_function(struct _lair_runtime *r, const struct _lair_ast *ast_node, struct _lair_env *env) {
 	if (!_is_callable(ast_node)) {
-		char buf[128] = {0};
+		char buf[512] = {0};
 		snprintf(buf, sizeof(buf), "Cannot call a non-function: %s", _friendly_enum(ast_node->atom.type));
 		check(r, _is_callable(ast_node), ERR_RUNTIME, buf);
 	}
@@ -303,7 +303,9 @@ static const struct _lair_type *_lair_call_function(struct _lair_runtime *r, con
 		cur_env = (struct _lair_env *)cur_env->parent;
 	}
 
-	throw_exception(r, ERR_RUNTIME, "No such function.");
+	char buf[512] = {0};
+	snprintf(buf, sizeof(buf), "No such function: %s", func_name);
+	throw_exception(r, ERR_RUNTIME, buf);
 	return NULL;
 }
 

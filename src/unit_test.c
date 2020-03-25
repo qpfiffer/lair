@@ -51,6 +51,10 @@ int test_equality() {
 	return _run_program("t/equality.den");
 }
 
+int test_equality_disparate() {
+	return _expect_failure("t/equality_disparate.den");
+}
+
 int test_functions_all_the_way_down() {
 	return _run_program("t/functions_all_the_way_down.den");
 }
@@ -113,6 +117,7 @@ int main(int argc, char *argv[]) {
 	run_test(test_assignment_no_function);
 	run_test(test_basic);
 	run_test(test_equality);
+	run_test(test_equality_disparate);
 	run_test(test_functions_all_the_way_down);
 	run_test(test_id_function);
 	run_test(test_loop);

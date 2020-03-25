@@ -1,3 +1,2 @@
-! println ! "This is a test string".1
-
-! println ! "This is a test string".1..10
+println "This is a test string".1
+println "This is a test string".1..10

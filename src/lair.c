@@ -1,6 +1,5 @@
 // vim: noet ts=4 sw=4
 #include <sys/mman.h>
-#include <sys/queue.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdlib.h>

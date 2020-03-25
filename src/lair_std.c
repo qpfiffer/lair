@@ -157,25 +157,45 @@ const struct _lair_type *_lair_builtin_str(LAIR_FUNCTION_SIG) {
 
 	if (argv[0] == NULL) {
 		char buf[] = "(null)";
-		strncpy(new_string->value.str, buf, sizeof(buf));
+		char *ptr = calloc(1, sizeof(buf));
+		memcpy(ptr, buf, sizeof(buf));
+		new_string->value.str = ptr;
 	} else {
+		char *friendly = _friendly_enum(argv[0]->type);
 		char buf[512] = {0};
+		char *ptr = NULL;
+		size_t siz = 0;
 
 		switch (argv[0]->type) {
 		case LR_STRING:
-			strncpy(new_string->value.str, argv[0]->value.str, sizeof(buf));
+			siz = strlen(argv[0]->value.str);
+			ptr = calloc(1, siz);
+			memcpy(ptr, argv[0]->value.str, siz);
+			new_string->value.str = ptr;
 			break;
 		case LR_NUM:
 			snprintf(buf, sizeof(buf), "%i", argv[0]->value.num);
-			strncpy(new_string->value.str, buf, sizeof(buf));
+
+			siz = strlen(buf);
+			ptr = calloc(1, siz);
+			memcpy(ptr, buf, siz);
+			new_string->value.str = ptr;
 			break;
 		case LR_FUNCTION:
-			snprintf(buf, sizeof(buf), "<%s: %s>", _friendly_enum(argv[0]->type), argv[0]->value.str);
-			strncpy(new_string->value.str, buf, sizeof(buf));
+			snprintf(buf, sizeof(buf), "<%s: %s>", friendly, argv[0]->value.str);
+
+			siz = strlen(buf);
+			ptr = calloc(1, siz);
+			memcpy(ptr, buf, siz);
+			new_string->value.str = ptr;
 			break;
 		default:
-			snprintf(buf, sizeof(buf), "<%s: %p>", _friendly_enum(argv[0]->type), argv[0]);
-			strncpy(new_string->value.str, buf, sizeof(buf));
+			snprintf(buf, sizeof(buf), "<%s: %p>", friendly, argv[0]);
+
+			siz = strlen(buf);
+			ptr = calloc(1, siz);
+			memcpy(ptr, buf, siz);
+			new_string->value.str = ptr;
 			break;
 		}
 	}

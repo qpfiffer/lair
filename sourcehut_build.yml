@@ -1,0 +1,10 @@
+image: alpine/latest
+sources:
+    - https://git.sr.ht/~qpfiffer/lair
+tasks:
+    - build: |
+        cd lair
+        make
+    - test: |
+        cd lair
+        ./unit_test

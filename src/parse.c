@@ -149,16 +149,24 @@ static int _is_operator(const char *stripped, const size_t stripped_len) {
 	}
 }
 
-static int _function_args_shadow_function(const struct _lair_token *new_token) {
+static int _function_args_shadow_function(
+		const struct _lair_token *new_token,
+		const struct _lair_token **shadowed) {
 	const struct _lair_token *cur = new_token->prev;
 	while (cur != NULL) {
-		if (cur->token_type != LR_FUNCTION && cur->token_type != LR_FUNCTION_ARG)
+		if (cur->token_type != LR_FUNCTION && cur->token_type != LR_FUNCTION_ARG) {
 			break;
-		if (cur->token_str != NULL && strcmp(new_token->token_str, cur->token_str) == 0)
+		}
+
+		const int32_t cmp_result = strcmp(new_token->token_str, cur->token_str);
+		if (cur->token_str != NULL && cmp_result == 0) {
+			*shadowed = cur;
 			return 1;
+		}
 
 		cur = cur->prev;
 	}
+
 	return 0;
 }
 
@@ -257,11 +265,17 @@ struct _lair_token *_lair_tokenize(struct _lair_runtime *r, const char *program,
 			if (new_token->prev != NULL) {
 				switch (new_token->prev->token_type) {
 					case LR_FUNCTION:
-					case LR_FUNCTION_ARG:
+					case LR_FUNCTION_ARG: {
+						const struct _lair_token *out = NULL;
 						new_token->token_type = LR_FUNCTION_ARG;
-						if (_function_args_shadow_function(new_token))
-							throw_exception(r, ERR_PARSE, "Function argument names shadow function name.");
+						if (_function_args_shadow_function(new_token, &out)) {
+							char buf[512] = {0};
+							const char *msg = "Function argument names shadow function name: %s shadows %s";
+							snprintf(buf, sizeof(buf), msg, new_token->token_str, (*out).token_str);
+							throw_exception(r, ERR_PARSE, buf);
+						}
 						break;
+					}
 					case LR_INDENT:
 						_intuit_token_type(r, new_token, stripped);
 						break;

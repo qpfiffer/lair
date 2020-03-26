@@ -265,7 +265,7 @@ static const struct _lair_type *_lair_call_function(struct _lair_runtime *r, con
 	if (!_is_callable(ast_node)) {
 		char buf[512] = {0};
 		snprintf(buf, sizeof(buf), "Cannot call a non-function: %s", _friendly_enum(ast_node->atom.type));
-		check(r, _is_callable(ast_node), ERR_RUNTIME, buf);
+		throw_exception(r, ERR_RUNTIME, buf);
 	}
 	/* Determine if the thing we're trying to call is a function
 	 * or not. It might be an atom, in which case we need to check
